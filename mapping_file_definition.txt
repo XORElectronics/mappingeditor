@@ -1,0 +1,165 @@
+MAPPING FILE DEFINITION (NerdSEQ Mapping save file):
+
+Filename is *.MAP
+
+[0..15]	Header "NerdSEQ Mapping"
+[16..17] Version Number Major, Minor
+[18..29] Filename
+[30..69] 40 bytes placeholder for possible future settings
+[70..89] Start of mapping payload. For 70 Rows, each row contains 10 words with the row information (each 16 bit unsigned, Big Endian):
+<SOURCE_BASE><SOURCE_FUNCTION><SOURCE_EXTRA><DESTINATION_BASE><DESTINATION_FUNCTION><DESTINATION_EXTRA><UNUSED><UNUSED><UNUSED><UNUSED>
+...
+After 70 rows..
+[1470] 16 Variables, each 16 bit unsigned Big Endian, default 0, Range 0 - 4095/0-FFF
+
+Payload definition:  0xFFFF is an unused/empty field ----
+All the fields are dynamic via a lookup. For now it is still 1:1
+
+Definitions per Base type:
+0 <SOURCE_CV_MOD_BASE>
+	<SOURCE_CV_MOD_FUNCTION>
+	0 CV In 1
+	1 CV In 2
+	2 CV In 3
+	3 CV In 4
+	4 CV Out 1
+	5 CV Out 2
+	6 CV Out 3
+	7 CV Out 4
+	8 CV Out 5
+	9 CV Out 6
+	10 MOD Out 1
+	11 MOD Out 2
+	12 MOD Out 3
+	13 MOD Out 4
+	14 MOD Out 5
+	15 MOD Out 6
+		<SOURCE_CV_MOD_EXTRA>
+		N/A
+
+1 <SOURCE_TRIGGER_BASE>
+	<SOURCE_TRIGGER_FUNCTION>
+	0..5 Trigger Outputs 1-6
+		<SOURCE_TRIGGER_EXTRA>
+		N/A
+
+2 <SOURCE_TRACK_BASE>
+	<SOURCE_TRACK_FUNCTION>
+	0..7 Tracks 1-8
+		<SOURCE_TRACK_EXTRA>
+		0..7 Probability 0-7
+		8 Row Probability
+		9 Pattern Row 
+		10 Pattern/Track run status
+		11 Track active note
+
+3 <SOURCE_AUTOMATOR_BASE>
+	<SOURCE_AUTOMATOR_FUNCTION>
+	0..7 Slot 0-7
+		<SOURCE_AUTOMATOR_EXTRA>
+		N/A
+
+4 <SOURCE_ENVELOPE_BASE>
+	<SOURCE_ENVELOPE_FUNCTION>
+	0..7 Envelope 1-8
+		<SOURCE_ENVELOPE_EXTRA>
+		N/A
+
+5 <SOURCE_MIDI_BASE>
+	<SOURCE_MIDI_FUNCTION>
+	0..15 TRS Midi Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48	Learn (result depends on selected EXTRA)
+		<SOURCE_MIDI_EXTRA>
+		0 Midi Note
+		1 Midi Gate
+		2 Midi Velocity
+		3 Midi Channel Pressure
+		4 Midi Pitchbend
+		5..124 Selected Midi Note 0-120 On/Off
+		125..245 Selected Midi Note 0-120 Velocity
+		246..364 Selected Midi Note 0-120 Aftertouch
+
+6 <SOURCE_MIDI_CC_BASE>
+	<SOURCE_MIDI_CC_FUNCTION>
+	0..15 TRS Midi Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48	Learn 
+		<SOURCE_MIDI_CC_EXTRA>
+		0..127 Midi Controller #
+
+7 <SOURCE_MIDI_NRPN_BASE>
+	<SOURCE_MIDI_NRPN_FUNCTION>
+	0..15 TRS Midi Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48	Learn 
+		<SOURCE_MIDI_NRPN_EXTRA>
+		0..9999 Midi NRPN Controller #
+		
+8 <SOURCE_I2C_BASE>
+	<SOURCE_I2C_FUNCTION>
+	0 SC.CV 
+	1 Learn
+		<SOURCE_I2C_EXTRA>
+		0..127 Portnumber
+		
+9 <SOURCE_VAR_BASE>
+	<SOURCE_VAR_FUNCTION>
+	0..15 Variable A - P
+	16..86 Mapping rows 00 - 45h (0-69)
+		<SOURCE_VAR_EXTRA>
+		0 Pass Value from Variable/Row
+		1..4096 Set Variable/Row to 0-4095/0-FFF
+
+10 <SOURCE_CALC_BASE>
+	<SOURCE_CALC_FUNCTION>
+	0 Add
+	1 Add w Overflow
+	2 Subtract 
+	3 Subtract with overflow
+	4 Multiply
+	5 Multiply with overflow
+	6 Multiply 0.1
+	7 Multiply 0.1 with overflow
+	8 Divide
+	9 Divide 0.1
+    10 Divide 0.1 with overflow
+	11 Modulo
+	12 Bitwise AND
+	13 Bitwise OR
+	14 Bitwise XOR
+    15 Left SHIFT
+    16 Right SHIFT
+    17 Logical AND
+	18 Logical OR
+    19 Logical XOR
+    20 IF <
+    21 IF <=
+    22 IF >
+    23 IF >=
+    24 IF =
+    25 IF <>
+    26 Flipflop   //logical flipflop  1st set, 2nd reset
+    27 Raising value does invert
+    28 Falling value does invert
+    29 Track & Hold
+    30 Sample & Hold
+    31 Pass A if B is true
+    32 Count
+	33 Logic Invert
+    34 Bitwise Invert
+    35 Right Shift with carry
+	36 Left Shift with carry
+    37 Increment 
+    38 Decrement 
+    39 MIN
+	40 MAX
+	41 Average 
+    42 Pitch To Note
+    43 Generate Random Value
+    44 Range former row between A and B
+	45 Force Value to Destination
+
