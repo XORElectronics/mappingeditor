@@ -159,9 +159,10 @@ Source definitions per Base type:
 	40 MAX
 	41 Average 
 	42 Pitch To Note
-	43 Generate Random Value
-	44 Range former row between A and B
-	45 Force Value to Destination
+	43 Note To Pitch
+	44 Generate Random Value
+	45 Range former row between A and B
+	46 Force Value to Destination
 		<SOURCE_CALC_EXTRA>
 		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
 		Value definition of a operand:
@@ -221,6 +222,13 @@ Source definitions per Base type:
 		10 Sega Gamepad:Left
 		11 Sega Gamepad:Right
 		
+14 <SOURCE_CONTROL_BASE>
+	<SOURCE_CONTROL_FUNCTION>
+	0 Execute X Mapping rows
+		<SOURCE_CONTROL_EXTRA>
+		0 - 31 Amount of mapping rows
+		
+
 Destination definitions per Base type:
 0 <DESTINATION_CV_BASE>
 	<DESTINATION_CV_FUNCTION>
