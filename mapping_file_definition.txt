@@ -163,7 +163,8 @@ Source definitions per Base type:
 	44 Generate Random Value
 	45 Range former row between A and B
 	46 Force Value to Destination
-		<SOURCE_CALC_EXTRA>
+	47 Generate Onetime Pulse if A is getting bigger than B
+			<SOURCE_CALC_EXTRA>
 		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
 		Value definition of a operand:
 		=0..=9 Constant 0 to 9
@@ -289,7 +290,12 @@ Destination definitions per Base type:
 	28 FX2 Overrule 
 	29 FX3 Overrule 
 	30 FX4 Overrule 
-	31..36 Unused yet
+	31 Start/Cue Sequencer Row of Track 
+	32 Start/Cue Sequencer Row 
+	33 Jump Sequencer Row of Track
+	34 Jump Sequencer Row
+	35 Stop / Cue Stop Sequencer Track
+	36 Unused
 	37 Euclidean
 	38..53 Drummatrix Eucliean
 	54 Pattern Cursor Position
