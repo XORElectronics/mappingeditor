@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "target": "ES5",
+        "lib": [
+            "ES2015",
+            "DOM"],
+        "jsx": "react",
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "sourceMap": true, 
+        "allowJs": false,
+        "outDir": "public/modules",
+        //"rootDirs": ["./src"],
+        //"baseUrl": ".",
+    },
+    "include": [
+        "./src/*"
+    ]
+}
