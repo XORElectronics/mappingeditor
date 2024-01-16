@@ -877,21 +877,6 @@ function decodeByteParameters(arg1) {
   }
 }
 
-// GENERATE JSON
-// const mapjson = JSON.stringify(mappingConfig);
-// console.log(mapjson);
-
-registerFileType((fileExt, filePath, fileData) => {
-  if (fileExt === "map" || fileExt === "MAP") {
-    const headerArray = fileData.getBytesAt(0, 15);
-    const header = String.fromCharCode(...headerArray);
-    if (header === "NerdSEQ Mapping") {
-      return true;
-    }
-  }
-  return false;
-});
-
 const MIDI_RPN_SOURCE_CATEGORY_ID = 7;
 const VAR_SOURCE_CATEGORY_ID = 9;
 const CALC_SOURCE_CATEGORY_ID = 10;
@@ -907,6 +892,21 @@ const GLOBAL_DESTINATION_CATEGORY_ID = 10;
 const GLOBAL_BUTTONS_DESTINATION_ID = 9;
 const GLOBAL_SCREENS_DESTINATION_ID = 10;
 const GLOBAL_MODES_DESTINATION_ID = 11;
+
+// GENERATE JSON
+// const mapjson = JSON.stringify(mappingConfig);
+// console.log(mapjson);
+
+registerFileType((fileExt, filePath, fileData) => {
+  if (fileExt === "map" || fileExt === "MAP") {
+    const headerArray = fileData.getBytesAt(0, 15);
+    const header = String.fromCharCode(...headerArray);
+    if (header === "NerdSEQ Mapping") {
+      return true;
+    }
+  }
+  return false;
+});
 
 registerParser(() => {
   read(16);
