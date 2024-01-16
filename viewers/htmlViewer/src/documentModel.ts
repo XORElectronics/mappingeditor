@@ -24,43 +24,6 @@ export class MappingDocument {
         this._rows = rows ?? new Array<Row>(MappingDocument.ROW_COUNT);
         this._variables = variables ?? new Array<Variable>(MappingDocument.VARIABLE_COUNT);
     }
-
-    public toHtml(useBsStyles: boolean = true): string {
-        let output = `<table ${useBsStyles ? "class='table table-dark'" : ''}><tbody>`;
-        output += `<tr><td>Header Text: </td><td>${this.header.headerText}</td></tr>`;
-        output += `<tr><td>Major Version: </td><td>${this.header.majorVersion}</td></tr>`;
-        output += `<tr><td>Minor Version: </td><td>${this.header.minorVersion}</td></tr>`;
-        output += `<tr><td>FileName: </td><td>${this.header.fileName}</td></tr>`;
-        output += `<tr>`;
-        output += `<table ${useBsStyles ? "class='table table-dark'" : ''}>`;
-        output += `<thead ${useBsStyles ? "class='thead-dark'" : ''}><tr><th>Index </th><th>Source Type </th><th>Source Function </th><th>Source Extra </th><th>Destination Type </th><th>Destination Function </th><th>Destination Extra </th></tr></thead>`;
-        output += `<tbody>`;
-        this.rows.forEach(row => {
-            output += `<tr>`;
-            output += `<td>${row.index}</td>`;
-            output += `<td>${row.source.type.text}</td>`;
-            output += `<td>${row.source.function.text}</td>`;
-            output += `<td>${row.source.extra.text}</td>`;
-            output += `<td>${row.destination.type.text}</td>`;
-            output += `<td>${row.destination.function.text}</td>`;
-            output += `<td>${row.destination.extra.text}</td>`;
-            output += `</tr>`;
-        });
-        output += `</tbody></table></tr><table ${useBsStyles ? "class='table table-dark'" : ''}>`;
-        this.variables.forEach(variable => {
-            output += `<tr><td>${variable.name}: </td><td>${variable.value}</td></tr>`;
-        });
-        output += "</tbody></table>";
-        return output;
-    }
-
-    public toJson(): string {
-        return JSON.stringify(this);
-    }
-
-    public toStream(): Blob {
-        return new Blob([], { type: "application/octet-stream" });
-    }
 }
 
 export class Header {
