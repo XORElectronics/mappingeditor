@@ -1,17 +1,11 @@
 import * as docModel from './documentModel.js'
 import * as dataModel from './dataModel.js'
 
-const DEBUG = false;
-
 export class MappingDocumentParser {
   private static readonly HEADER_LENGTH = 70;
   private static readonly VARIABLES_OFFSET = 1470;
 
   public static parse(buffer: Uint8Array): docModel.MappingDocument {
-    if (DEBUG) {
-      const modJson = dataModel.toJson()
-      console.log(modJson);
-    }
     const document = new docModel.MappingDocument();
     const headerData = buffer.slice(0, MappingDocumentParser.HEADER_LENGTH);
     document.header = HeaderParser.parse(headerData);
@@ -19,10 +13,6 @@ export class MappingDocumentParser {
     document.rows = RowsParser.parse(rowsData);
     const variablesData = buffer.slice(MappingDocumentParser.VARIABLES_OFFSET);
     document.variables = VariablesParser.parse(new Uint16Array(variablesData.buffer));
-    if (DEBUG) {
-      const docJson = document.toJson();
-      console.log(docJson);
-    }
     return document;
   }
 }
@@ -38,10 +28,10 @@ class HeaderParser {
     const header = new docModel.Header();
     const textDecoder = new TextDecoder();
 
-    header.headerText = textDecoder.decode(buffer.slice(0, HeaderParser.HEADER_TEXT_LENGTH));
+    header.headerText = textDecoder.decode(buffer.slice(0, HeaderParser.HEADER_TEXT_LENGTH)).replace(/[\0\s]+$/, ''); // remove trailing nulls and spaces
     header.majorVersion = buffer[HeaderParser.MAJOR_VERSION_OFFSET];
     header.minorVersion = buffer[HeaderParser.MINOR_VERSION_OFFSET];
-    header.fileName = textDecoder.decode(buffer.slice(HeaderParser.FILE_NAME_OFFSET, HeaderParser.FILE_NAME_OFFSET + HeaderParser.FILE_NAME_LENGTH));
+    header.fileName = textDecoder.decode(buffer.slice(HeaderParser.FILE_NAME_OFFSET, HeaderParser.FILE_NAME_OFFSET + HeaderParser.FILE_NAME_LENGTH)).replace(/[\0\s]+$/, ''); // remove trailing nulls and spaces
     header.variant = ''; // variant is not encoded in the file yet
     // ignore next 40 bytes (reserved)
 
@@ -319,7 +309,7 @@ class DestinationExtraParser {
             break;
           }
 
-          if (key > 10127 || key !== dataModel.EMPTY_KEY) {
+          if (key > 10127 && key !== dataModel.EMPTY_KEY) {
             throw new Error(`Unexpected Midi CC value ${key}`);
           }
           // Should fall through to default if none of the above are true

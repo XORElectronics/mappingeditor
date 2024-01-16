@@ -39,41 +39,6 @@ var MappingDocument = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    MappingDocument.prototype.toHtml = function (useBsStyles) {
-        if (useBsStyles === void 0) { useBsStyles = true; }
-        var output = "<table ".concat(useBsStyles ? "class='table table-dark'" : '', "><tbody>");
-        output += "<tr><td>Header Text: </td><td>".concat(this.header.headerText, "</td></tr>");
-        output += "<tr><td>Major Version: </td><td>".concat(this.header.majorVersion, "</td></tr>");
-        output += "<tr><td>Minor Version: </td><td>".concat(this.header.minorVersion, "</td></tr>");
-        output += "<tr><td>FileName: </td><td>".concat(this.header.fileName, "</td></tr>");
-        output += "<tr>";
-        output += "<table ".concat(useBsStyles ? "class='table table-dark'" : '', ">");
-        output += "<thead ".concat(useBsStyles ? "class='thead-dark'" : '', "><tr><th>Index </th><th>Source Type </th><th>Source Function </th><th>Source Extra </th><th>Destination Type </th><th>Destination Function </th><th>Destination Extra </th></tr></thead>");
-        output += "<tbody>";
-        this.rows.forEach(function (row) {
-            output += "<tr>";
-            output += "<td>".concat(row.index, "</td>");
-            output += "<td>".concat(row.source.type.text, "</td>");
-            output += "<td>".concat(row.source.function.text, "</td>");
-            output += "<td>".concat(row.source.extra.text, "</td>");
-            output += "<td>".concat(row.destination.type.text, "</td>");
-            output += "<td>".concat(row.destination.function.text, "</td>");
-            output += "<td>".concat(row.destination.extra.text, "</td>");
-            output += "</tr>";
-        });
-        output += "</tbody></table></tr><table ".concat(useBsStyles ? "class='table table-dark'" : '', ">");
-        this.variables.forEach(function (variable) {
-            output += "<tr><td>".concat(variable.name, ": </td><td>").concat(variable.value, "</td></tr>");
-        });
-        output += "</tbody></table>";
-        return output;
-    };
-    MappingDocument.prototype.toJson = function () {
-        return JSON.stringify(this);
-    };
-    MappingDocument.prototype.toStream = function () {
-        return new Blob([], { type: "application/octet-stream" });
-    };
     MappingDocument.ROW_COUNT = 70;
     MappingDocument.VARIABLE_COUNT = 16;
     return MappingDocument;

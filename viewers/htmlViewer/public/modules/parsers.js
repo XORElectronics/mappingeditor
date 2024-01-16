@@ -1,14 +1,9 @@
 import * as docModel from './documentModel.js';
 import * as dataModel from './dataModel.js';
-var DEBUG = false;
 var MappingDocumentParser = /** @class */ (function () {
     function MappingDocumentParser() {
     }
     MappingDocumentParser.parse = function (buffer) {
-        if (DEBUG) {
-            var modJson = dataModel.toJson();
-            console.log(modJson);
-        }
         var document = new docModel.MappingDocument();
         var headerData = buffer.slice(0, MappingDocumentParser.HEADER_LENGTH);
         document.header = HeaderParser.parse(headerData);
@@ -16,10 +11,6 @@ var MappingDocumentParser = /** @class */ (function () {
         document.rows = RowsParser.parse(rowsData);
         var variablesData = buffer.slice(MappingDocumentParser.VARIABLES_OFFSET);
         document.variables = VariablesParser.parse(new Uint16Array(variablesData.buffer));
-        if (DEBUG) {
-            var docJson = document.toJson();
-            console.log(docJson);
-        }
         return document;
     };
     MappingDocumentParser.HEADER_LENGTH = 70;
@@ -33,10 +24,10 @@ var HeaderParser = /** @class */ (function () {
     HeaderParser.parse = function (buffer) {
         var header = new docModel.Header();
         var textDecoder = new TextDecoder();
-        header.headerText = textDecoder.decode(buffer.slice(0, HeaderParser.HEADER_TEXT_LENGTH));
+        header.headerText = textDecoder.decode(buffer.slice(0, HeaderParser.HEADER_TEXT_LENGTH)).replace(/[\0\s]+$/, ''); // remove trailing nulls and spaces
         header.majorVersion = buffer[HeaderParser.MAJOR_VERSION_OFFSET];
         header.minorVersion = buffer[HeaderParser.MINOR_VERSION_OFFSET];
-        header.fileName = textDecoder.decode(buffer.slice(HeaderParser.FILE_NAME_OFFSET, HeaderParser.FILE_NAME_OFFSET + HeaderParser.FILE_NAME_LENGTH));
+        header.fileName = textDecoder.decode(buffer.slice(HeaderParser.FILE_NAME_OFFSET, HeaderParser.FILE_NAME_OFFSET + HeaderParser.FILE_NAME_LENGTH)).replace(/[\0\s]+$/, ''); // remove trailing nulls and spaces
         header.variant = ''; // variant is not encoded in the file yet
         // ignore next 40 bytes (reserved)
         return header;
@@ -325,7 +316,7 @@ var DestinationExtraParser = /** @class */ (function () {
                         destinationExtra = new docModel.DestinationExtra(key, "Midi NRPN Controller #".concat(key - 128, "}"));
                         break;
                     }
-                    if (key > 10127 || key !== dataModel.EMPTY_KEY) {
+                    if (key > 10127 && key !== dataModel.EMPTY_KEY) {
                         throw new Error("Unexpected Midi CC value ".concat(key));
                     }
                     // Should fall through to default if none of the above are true
