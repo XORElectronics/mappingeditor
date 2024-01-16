@@ -1,0 +1,37 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NerdSeq Mapping File Viewer and Converter</title>
+    <link rel="icon" href="./assets/images/fav.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/5.2.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./assets/styles/index.css">
+</head>
+
+<body class="bg-dark text-light">
+    <div class="container d-flex align-items-center justify-content-center">
+        <div class="content pt-3">
+            <div class="pt-3">
+                <img src="./assets/images/nerdseq-logo.png" alt="Logo" height="100">
+            </div>
+            <h2 class="pt-3">Mapping File Viewer and Converter</h2>
+            <div id="mappingFileSelectContainer" class="pt-3">
+                <label for="fileInput" class="btn btn-info border-dark">Select
+                    Mapping File</label>
+                <input id="fileInput" class="d-none" type="file" accept=".map" />
+            </div>
+            <div id="downloadActionsContainer" class="pt-3 d-none">
+                <button id="buttonDownloadHtml" type="button" class="btn btn-info border-dark">Download HTML</button>
+                <button id="buttonDownloadMd" type="button" class="btn btn-info border-dark">Download Markdown</button>
+                <button id="buttonDownloadJson" type="button" class="btn btn-info border-dark">Download JSON</button>
+                <button id="buttonDownloadMap" type="button" class="btn btn-info border-dark">Download MAP</button>
+                <button id="buttonReset" type="button" class="btn btn-info border-dark">Reset</button>
+            </div>
+            <div id="output" class="pt-3"></div>
+
+        </div>
+        <script type="module" src="./modules/index.js"></script>
+</body>
+
+</html>

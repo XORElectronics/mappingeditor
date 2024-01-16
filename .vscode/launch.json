@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "edge",
+            "request": "launch",
+            "name": "Launch Edge against localhost",
+            "url": "http://127.0.0.1:5500/viewers/htmlViewer/public/index.html",
+            "webRoot": "${workspaceFolder}/viewers/htmlViewer",
+        },
+        {
+            "name": "Launch Chrome against localhost",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://127.0.0.1:5500/viewers/htmlViewer/public/index.html",
+            "webRoot": "${workspaceFolder}/viewers/htmlViewer",
+        }
+    ]
+}
