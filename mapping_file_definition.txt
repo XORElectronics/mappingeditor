@@ -1,0 +1,510 @@
+MAPPING FILE DEFINITION (NerdSEQ Mapping save file V2.0A):
+
+Filename is *.MAP
+
+[0..15]	Header "NerdSEQ Mapping"
+[16..17] Version Number Major, Minor
+[18..29] Filename
+[30..69] 40 bytes placeholder for possible future settings
+[70..89] Start of mapping payload. For 70 Rows, each row contains 10 words with the row information (each 16 bit unsigned, Big Endian):
+<SOURCE_BASE><SOURCE_FUNCTION><SOURCE_EXTRA><DESTINATION_BASE><DESTINATION_FUNCTION><DESTINATION_EXTRA><UNUSED><UNUSED><UNUSED><UNUSED>
+...
+After 70 rows..
+[1470] 16 Variables, each 16 bit unsigned Big Endian, default 0, Range 0 - 4095/0-FFF
+
+Payload definition:  0xFFFF is an unused/empty field ----
+All the fields are dynamic via a lookup. For now it is still 1:1
+
+Source definitions per Base type:
+0 <SOURCE_CV_MOD_BASE>
+	<SOURCE_CV_MOD_FUNCTION>
+	0 CV In 1
+	1 CV In 2
+	2 CV In 3
+	3 CV In 4
+	4 CV Out 1
+	5 CV Out 2
+	6 CV Out 3
+	7 CV Out 4
+	8 CV Out 5
+	9 CV Out 6
+	10 MOD Out 1
+	11 MOD Out 2
+	12 MOD Out 3
+	13 MOD Out 4
+	14 MOD Out 5
+	15 MOD Out 6
+		<SOURCE_CV_MOD_EXTRA>
+		N/A
+
+1 <SOURCE_TRIGGER_BASE>
+	<SOURCE_TRIGGER_FUNCTION>
+	0..5 Trigger Outputs 1-6
+		<SOURCE_TRIGGER_EXTRA>
+		N/A
+
+2 <SOURCE_TRACK_BASE>
+	<SOURCE_TRACK_FUNCTION>
+	0..7 Tracks 1-8
+		<SOURCE_TRACK_EXTRA>
+		0..7 Probability 0-7
+		8 Row Probability
+		9 Pattern Row 
+		10 Pattern/Track run status
+		11 Track active note
+
+3 <SOURCE_AUTOMATOR_BASE>
+	<SOURCE_AUTOMATOR_FUNCTION>
+	0..7 Slot 0-7
+		<SOURCE_AUTOMATOR_EXTRA>
+		N/A
+
+4 <SOURCE_ENVELOPE_BASE>
+	<SOURCE_ENVELOPE_FUNCTION>
+	0..7 Envelope 1-8
+		<SOURCE_ENVELOPE_EXTRA>
+		N/A
+
+5 <SOURCE_MIDI_BASE>
+	<SOURCE_MIDI_FUNCTION>
+	0..15 TRS Midi Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48	Learn (result depends on selected EXTRA)
+		<SOURCE_MIDI_EXTRA>
+		0 Midi Note
+		1 Midi Gate
+		2 Midi Velocity
+		3 Midi Channel Pressure
+		4 Midi Pitchbend
+		5..124 Selected Midi Note 0-120 On/Off
+		125..245 Selected Midi Note 0-120 Velocity
+		246..364 Selected Midi Note 0-120 Aftertouch
+
+6 <SOURCE_MIDI_CC_BASE>
+	<SOURCE_MIDI_CC_FUNCTION>
+	0..15 TRS Midi Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48	Learn 
+		<SOURCE_MIDI_CC_EXTRA>
+		0..127 Midi Controller #
+
+7 <SOURCE_MIDI_NRPN_BASE>
+	<SOURCE_MIDI_NRPN_FUNCTION>
+	0..15 TRS Midi Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48	Learn 
+		<SOURCE_MIDI_NRPN_EXTRA>
+		0..9999 Midi NRPN Controller #
+		
+8 <SOURCE_I2C_BASE>
+	<SOURCE_I2C_FUNCTION>
+	0 SC.CV 
+	1 Learn
+		<SOURCE_I2C_EXTRA>
+		0..127 Portnumber
+		
+9 <SOURCE_VAR_BASE>
+	<SOURCE_VAR_FUNCTION>
+	0..15 Variable A - P
+	16..86 Mapping rows 00 - 45h (0-69)
+		<SOURCE_VAR_EXTRA>
+		0 Pass Value from Variable/Row
+		1..4096 Set Variable/Row to 0-4095/0-FFF
+
+10 <SOURCE_CALC_BASE>
+	<SOURCE_CALC_FUNCTION>
+	0 Add
+	1 Add w Overflow
+	2 Subtract 
+	3 Subtract with overflow
+	4 Multiply
+	5 Multiply with overflow
+	6 Multiply 0.1
+	7 Multiply 0.1 with overflow
+	8 Divide
+	9 Divide 0.1
+	10 Divide 0.1 with overflow
+	11 Modulo
+	12 Bitwise AND
+	13 Bitwise OR
+	14 Bitwise XOR
+	15 Left SHIFT
+	16 Right SHIFT
+	17 Logical AND
+	18 Logical OR
+	19 Logical XOR
+	20 IF <
+	21 IF <=
+	22 IF >
+	23 IF >=
+	24 IF =
+	25 IF <>
+	26 Flipflop   //logical flipflop  1st set, 2nd reset
+	27 Raising value does invert
+	28 Falling value does invert
+	29 Track & Hold
+	30 Sample & Hold
+	31 Pass A if B is true
+	32 Count
+	33 Logic Invert
+	34 Bitwise Invert
+	35 Right Shift with carry
+	36 Left Shift with carry
+	37 Increment 
+	38 Decrement 
+	39 MIN
+	40 MAX
+	41 Average 
+	42 Pitch To Note
+	43 Note To Pitch
+	44 Generate Random Value
+	45 Range former row between A and B
+	46 Force Value to Destination
+	47 Generate Onetime Pulse if A is getting bigger than B
+			<SOURCE_CALC_EXTRA>
+		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
+		Value definition of a operand:
+		=0..=9 Constant 0 to 9
+		VA..VP Variables A-P
+		00..70 Rows 0 - 70
+		
+11 <SOURCE_SKIP_BASE>
+	<SOURCE_SKIP_FUNCTION>
+	0 <
+	1 <=
+	2 >
+	3 >=
+	4 =
+	5 <>
+		<SOURCE_SKIP_EXTRA>
+		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
+		Value definition of a operand:
+		=0..=9 Constant 0 to 9
+		VA..VP Variables A-P
+		00..70 Rows 0 - 70
+		
+12 <SOURCE_GLOBAL_BASE>
+	<SOURCE_GLOBAL_FUNCTION>
+	0 Current Mainclock Row
+	1 Sequencer Started/Stopped
+	2 Clock Input State
+	3 Clock Output State
+	4 Reset Input State
+	5 Reset Output State
+	6 Random Value
+	7 Clock Tempo/BPM
+	8 Sequencer Value
+	9 Create Pulse from Command
+		<SOURCE_GLOBAL_EXTRA>
+		N/A
+		
+13 <SOURCE_EXTERNAL_BASE>
+	<SOURCE_EXTERNAL_FUNCTION>
+	0 Keyboard Numpad
+	1 Sega Gamepad
+		<SOURCE_EXTERNAL_FUNCTION>
+		Keyboard Numpad selected:
+		0..9 Keyboard numpad numbers
+		10 Numpad dot
+		Sega Gamepad selected:
+		0 Sega Gamepad:A
+		1 Sega Gamepad:B
+		2 Sega Gamepad:C
+		3 Sega Gamepad:X
+		4 Sega Gamepad:Y
+		5 Sega Gamepad:Z
+		6 Sega Gamepad:Start
+		7 Sega Gamepad:Mode
+		8 Sega Gamepad:Up
+		9 Sega Gamepad:Down
+		10 Sega Gamepad:Left
+		11 Sega Gamepad:Right
+		
+14 <SOURCE_CONTROL_BASE>
+	<SOURCE_CONTROL_FUNCTION>
+	0 Execute X Mapping rows
+		<SOURCE_CONTROL_EXTRA>
+		0 - 31 Amount of mapping rows
+		
+
+Destination definitions per Base type:
+0 <DESTINATION_CV_BASE>
+	<DESTINATION_CV_FUNCTION>
+	0 Pitch
+	1 Note
+		<DESTINATION_CV_EXTRA>
+		0..5 Local CV 1..6
+		6..11 Local MOD 1..6
+		12..27 CV16 NSA1 1-16
+		28..43 CV16 NSA2 1-16
+		44..59 CV16 NSA3 1-16
+		60..75 CV16 NSA4 1-16
+		
+1 <DESTINATION_TRIGGER_BASE>
+	<DESTINATION_TRIGGER_FUNCTION>
+	0 Gate
+	1 Trigger
+	2 Trigger Value
+	3 Trigger Always
+	4 Trigger Value Always
+		<DESTINATION_TRIGGER_EXTRA>
+		0..5 Local Trigger 1..6
+		6..21 Trigger16 NSA1 1-16
+		22..37 Trigger16 NSA2 1-16
+		38..53 Trigger16 NSA3 1-16
+		54..69 Trigger16 NSA4 1-16
+		
+2 <DESTINATION_TRACK_BASE>
+	<DESTINATION_TRACK_FUNCTION>
+	0 Mute
+	1 Solo
+	2 Pattern Order
+	3 Transpose
+	4 Trigger Delay
+	5 Probability 1
+	6 Probability 2
+	7 Probability 3
+	8 Probability 4
+	9 Probability 5
+	10 Probability 6
+	11 Probability 7
+	12 Probability 8
+	13 Row Probability
+	14 Glide CV
+	15 Glide CV Resolution
+	16 Glide MOD
+	17 Glide MOD Resolution
+	18 Track Clock
+	19 Set Pattern Start Position(not used yet)
+	20 Pattern Length
+	21 Set current Pattern Row
+	22 Generate Tick
+	23 Pattern Shift Up
+	24 Pattern Shift Down
+	25 Sync Track
+	26 Reset Track
+	27 FX1 Overrule 
+	28 FX2 Overrule 
+	29 FX3 Overrule 
+	30 FX4 Overrule 
+	31 Start/Cue Sequencer Row of Track 
+	32 Start/Cue Sequencer Row 
+	33 Jump Sequencer Row of Track
+	34 Jump Sequencer Row
+	35 Stop / Cue Stop Sequencer Track
+	36 Unused
+	37 Euclidean
+	38..53 Drummatrix Eucliean
+	54 Pattern Cursor Position
+	55 Pattern Note at Cursor
+	56..119 Note at Pattern Step 0-63
+	120..183 Value at Cursor Column Step 0-63
+	
+3 <DESTINATION_AUTOMATOR_BASE>
+	<DESTINATION_AUTOMATOR_FUNCTION>
+	0..7 Selected Automator Slot
+		<DESTINATION_AUTOMATOR_EXTRA>
+		Depends on what type the slot is. Currently only LFO integrated
+		LFO:
+		0 Start
+		1 Reset
+		2 Speed
+		3 Offset
+		4 Invert
+		5 Clocksource
+		6 Amplitude
+		7 Waveform
+		8 Bitrate
+		9 Phase
+		
+4 <DESTINATION_ENVELOPE_BASE>
+	<DESTINATION_ENVELOPE_FUNCTION>
+	0..7 Envelope 1-8
+		<DESTINATION_ENVELOPE_EXTRA>
+		0 Attack
+		1 Attack Peak
+		2 Decay
+		3 Sustain
+		4 Release
+		5 Offset
+		6 Gate
+		7 Fire
+		8 Toggle
+		
+5 <DESTINATION_MIDICC_BASE>
+	<DESTINATION_MIDICC_FUNCTION>
+	0..15 TRS/DIN Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+	48 Learn Controller
+		<DESTINATION_MIDICC_EXTRA>
+		0..127 Midi Controller 0-127
+		128 - 10127 Midi NRPN Controller 0-9999
+		
+6 <DESTINATION_I2C_BASE>
+	<DESTINATION_I2C_FUNCTION>
+	0 I2CA SET.CV Slew
+	1 I2CA SET.CV NoSlew
+	2 I2CA SET.CV NoSlew X
+	3 I2CA SET.TR
+	4 I2CA SET.CV Slew
+	5 I2CA SET.CV NoSlew
+	6 I2CA SET.CV NoSlew X
+	7 I2CA SET.TR
+		<DESTINATION_I2C_EXTRA>
+		I2C Port 0-127 (1-128)
+		
+7 <DESTINATION_AUDIO_BASE>
+	<DESTINATION_AUDIO_FUNCTION>
+	0..3 Audio Part/Channel/Operator 1-4
+		<DESTINATION_AUDIO_EXTRA>
+		0 Pitch
+		1 Note
+		2 Gate
+		3 Start/Stop Wave
+		4 Sample/Waveform
+		5 Offset
+		6 Backwards
+		7 Delay Type
+		8 Delay Time
+		9 Delay Send
+		10 Delay Feedback
+		11 FM Boost
+		12 Volume
+		13 Glide
+		14 Mute
+		15 Clone Notes
+		16 Note Coarse
+		17 Fine Coarse
+		18 Modulation Source
+		19 PWM
+		20 Wavefolder
+		21 Bitcrush
+		22 Distortion    
+		
+8 <DESTINATION_SETVAR_BASE>
+	<DESTINATION_SETVAR_FUNCTION>
+	0..15 Variable A-P
+	16..85 ROW 0-69
+		<DESTINATION_SETVAR_EXTRA>
+		0 Set Variable/Row
+		1 Reset Variable/Row if Source == true
+		
+9 <DESTINATION_RANDOMRANGE_BASE>
+	<DESTINATION_RANDOMRANGE_FUNCTION>
+	0..15 Range 0-15
+		<DESTINATION_RANDOMRANGE_EXTRA>
+		0 Minimum Range
+		1 Maximum Range 
+		
+10 <DESTINATION_GLOBAL_BASE>
+	<DESTINATION_GLOBAL_FUNCTION>
+	0 Transpose
+	1 Swing
+	2 Tempo/BPM
+	3 Masterclock Steps
+	4 Scale
+	5 Scale Keynote
+	6 Resync All Tracks
+	7 Reset Player
+	8 Row as Midi Record Source
+	9 Buttons
+		<DESTINATION_GLOBAL_EXTRA>  Belongs to buttons
+		0 Sequencer/Mark
+		1 Pattern/Copy
+		2 Patch/Delete
+		3 Table/Record
+		4 Automate/Nerd
+		5 Project/Setup
+		6 Start
+		7 Stop
+		8 Shift
+		9 OK
+		10 Down
+		11 Up
+		12 Cursor Up
+		13 Cursor Down
+		14 Cursor Left
+		15 Cursor Right
+	10 Screens
+		<DESTINATION_GLOBAL_EXTRA>  Belongs to screens
+		0 Sequencer Screen
+		1 Pattern Screen 
+		2: Patch Screen
+		3: Table Screen
+		4: Current Values Screen
+		5: Automator Screen
+		6: Envelope Screen
+		7: Track Setup Screen
+		8: Random FX Screen
+		9: Mappings Screen
+		10: Variable Screen
+		11: Scaling Screen
+		12: Nerd Menu
+		13: Project Screen
+		14: Setup Screen
+		15: Sample Select Screen
+		16: Record Setup Screen
+		17: Midi/I2C Setup Screen
+		18: Screen Saver
+		19: Track Assign Screen
+		20: Load Project
+		21: Save Project
+	11 Modes
+		<DESTINATION_GLOBAL_EXTRA>  Belongs to modes
+		0 Edit Mode
+		1 Record Mode
+
+		<DESTINATION_GLOBAL_EXTRA> N/A for all other function types
+		
+11 <DESTINATION_CV16_BASE>
+	<DESTINATION_CV16_FUNCTION>
+	0 Glide Speed
+	1 Glide Resolution
+	2 Envelope 1 Attack
+	3 Envelope 1 Amplitude
+	4 Envelope 1 Release
+	5 Envelope 1 Fire Oneshot
+	6 Envelope 1 Fire A/R
+	....repeat 7 times for 8 envelopes
+	42 LFO 1 Type
+	43 LFO 1 Speed
+	44 LFO 1 Amplitude
+	45 LFO 1 Start
+	46 LFO 1 Reset
+	....repeat 7 times for 8 LFO
+	82 Stop Modulator Function
+		<DESTINATION_CV16_EXTRA>
+		0..15 NSA1 CV 1-16
+		16..31 NSA2 CV 1-16
+		32..47 NSA3 CV 1-16
+		48..63 NSA4 CV 1-16
+		
+12 <DESTINATION_TABLE_BASE>
+	<DESTINATION_TABLE_FUNCTION>
+	0..31 Selected Table 0-31
+	32..39 Running table on track 1-8
+	40 Running table at selected cursor column
+		<DESTINATION_TABLE_EXTRA>
+		0 Speed
+		1 Type
+		2 Quantize
+		3 Set Chord
+		4 Range Low
+		5 Range High
+		6 Set Preset
+		7 Add Tick
+		
+13 <DESTINATION_MIDI_BASE>
+	<DESTINATION_MIDI_FUNCTION>
+	0..15 TRS/DIN Channel 1-16
+	16..31 USB Host Channel 1-16
+	32..47 USB Device Channel 1-16
+		<DESTINATION_MIDI_EXTRA>
+		0 Note On
+		1 Note Off
+		2 Note OnOff
+		3 Pitchbend
