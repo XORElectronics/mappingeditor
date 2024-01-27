@@ -151,7 +151,7 @@ var SourceExtraParser = /** @class */ (function () {
                 {
                     var highByte = (key & 0xFF00) >> 8;
                     var lowByte = key & 0x00FF;
-                    sourceExtra = new docModel.SourceExtra(key, "".concat(SourceExtraParser.decodeByteExtra(highByte), " | ").concat(SourceExtraParser.decodeByteExtra(lowByte)));
+                    sourceExtra = new docModel.SourceExtra(key, "".concat(dataModel.decodeByteExtra(highByte), " | ").concat(dataModel.decodeByteExtra(lowByte)));
                     // TODO: will probably need a different type for these 2 value extras
                     break;
                 }
@@ -198,23 +198,6 @@ var SourceExtraParser = /** @class */ (function () {
                 }
         }
         return sourceExtra !== null && sourceExtra !== void 0 ? sourceExtra : new docModel.SourceExtra();
-    };
-    SourceExtraParser.decodeByteExtra = function (byteSizeExtra) {
-        if (byteSizeExtra === 255) {
-            return "----";
-        }
-        if (byteSizeExtra >= 0 && byteSizeExtra <= 9) {
-            return "Constant ".concat(byteSizeExtra);
-        }
-        if (byteSizeExtra >= 10 && byteSizeExtra <= 25) {
-            return "Variable ".concat(String.fromCharCode(55 + byteSizeExtra));
-        }
-        if (byteSizeExtra >= 26 && byteSizeExtra <= 75) {
-            return "Row ".concat(byteSizeExtra - 26);
-        }
-        if (byteSizeExtra > 75) {
-            return "Unexpected Value";
-        }
     };
     return SourceExtraParser;
 }());

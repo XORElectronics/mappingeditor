@@ -851,7 +851,7 @@ export var globalModesDestinationExtras = [
     { key: 1, value: "Record Mode" },
 ];
 var MAPPING_COUNT = 70;
-function decodeByteExtras(arg) {
+export function decodeByteExtra(arg) {
     if (arg === 255) {
         return "----";
     }
@@ -861,7 +861,7 @@ function decodeByteExtras(arg) {
     if (arg >= 10 && arg <= 25) {
         return "Variable ".concat(String.fromCharCode(55 + arg));
     }
-    if (arg >= 26 && arg <= 75) {
+    if (arg >= 26 && arg <= 95) {
         return "Row ".concat(arg - 26);
     }
     if (arg > 75) {

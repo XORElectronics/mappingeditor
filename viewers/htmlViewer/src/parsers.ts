@@ -148,7 +148,7 @@ class SourceExtraParser {
         {
           let highByte = (key & 0xFF00) >> 8;
           let lowByte = key & 0x00FF;
-          sourceExtra = new docModel.SourceExtra(key, `${SourceExtraParser.decodeByteExtra(highByte)} | ${SourceExtraParser.decodeByteExtra(lowByte)}`);
+          sourceExtra = new docModel.SourceExtra(key, `${dataModel.decodeByteExtra(highByte)} | ${dataModel.decodeByteExtra(lowByte)}`);
           // TODO: will probably need a different type for these 2 value extras
           break;
         }
@@ -195,24 +195,6 @@ class SourceExtraParser {
         }
     }
     return sourceExtra ?? new docModel.SourceExtra();
-  }
-
-  private static decodeByteExtra(byteSizeExtra: number) {
-    if (byteSizeExtra === 255) {
-      return `----`;
-    }
-    if (byteSizeExtra >= 0 && byteSizeExtra <= 9) {
-      return `Constant ${byteSizeExtra}`;
-    }
-    if (byteSizeExtra >= 10 && byteSizeExtra <= 25) {
-      return `Variable ${String.fromCharCode(55 + byteSizeExtra)}`;
-    }
-    if (byteSizeExtra >= 26 && byteSizeExtra <= 75) {
-      return `Row ${byteSizeExtra - 26}`;
-    }
-    if (byteSizeExtra > 75) {
-      return `Unexpected Value`;
-    }
   }
 }
 

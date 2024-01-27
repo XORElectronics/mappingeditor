@@ -898,7 +898,7 @@ export const globalModesDestinationExtras = [
 
 const MAPPING_COUNT = 70;
 
-function decodeByteExtras(arg: number) {
+export function decodeByteExtra(arg: number) {
     if (arg === 255) {
         return `----`;
     }
@@ -908,7 +908,7 @@ function decodeByteExtras(arg: number) {
     if (arg >= 10 && arg <= 25) {
         return `Variable ${String.fromCharCode(55 + arg)}`;
     }
-    if (arg >= 26 && arg <= 75) {
+    if (arg >= 26 && arg <= 95) {
         return `Row ${arg - 26}`;
     }
     if (arg > 75) {
