@@ -911,7 +911,7 @@ export function decodeByteExtra(arg: number) {
     if (arg >= 26 && arg <= 95) {
         return `Row ${arg - 26}`;
     }
-    if (arg > 75) {
+    if (arg > 95) {
         return `Unexpected Value`;
     }
 }
