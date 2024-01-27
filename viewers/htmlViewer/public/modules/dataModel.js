@@ -864,7 +864,7 @@ export function decodeByteExtra(arg) {
     if (arg >= 26 && arg <= 95) {
         return "Row ".concat(arg - 26);
     }
-    if (arg > 75) {
+    if (arg > 95) {
         return "Unexpected Value";
     }
 }
