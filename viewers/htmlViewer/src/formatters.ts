@@ -13,12 +13,12 @@ export function toHtml(document: MappingDocument, useBsStyles: boolean = false):
     document.rows.forEach(row => {
         output += `<tr>`;
         output += `<td>${row.index}</td>`;
-        output += `<td title="${row.source.type.abbr}">${row.source.type.description}</td>`;
-        output += `<td title="${row.source.function.abbr}>${row.source.function.description}</td>`;
-        output += `<td title="${row.source.extra.abbr}">${row.source.extra.description}</td>`;
-        output += `<td title="${row.destination.type.abbr}">${row.destination.type.description}</td>`;
-        output += `<td title="${row.destination.function.abbr}">${row.destination.function.description}</td>`;
-        output += `<td title="${row.destination.extra.abbr}">${row.destination.extra.description}</td>`;
+        output += `<td title='${row.source.type.abbr}'>${row.source.type.description}</td>`;
+        output += `<td title='${row.source.function.abbr}'>${row.source.function.description}</td>`;
+        output += `<td title='${row.source.extra.abbr}'>${row.source.extra.description}</td>`;
+        output += `<td title='${row.destination.type.abbr}'>${row.destination.type.description}</td>`;
+        output += `<td title='${row.destination.function.abbr}'">${row.destination.function.description}</td>`;
+        output += `<td title='${row.destination.extra.abbr}'>${row.destination.extra.description}</td>`;
         output += `</tr>`;
     });
     output += `</tbody></table></tr><table ${useBsStyles ? "class='table table-dark'" : ''}>`;

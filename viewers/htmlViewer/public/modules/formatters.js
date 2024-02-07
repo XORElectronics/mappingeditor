@@ -12,12 +12,12 @@ export function toHtml(document, useBsStyles) {
     document.rows.forEach(function (row) {
         output += "<tr>";
         output += "<td>".concat(row.index, "</td>");
-        output += "<td title=\"".concat(row.source.type.abbr, "\">").concat(row.source.type.description, "</td>");
-        output += "<td title=\"".concat(row.source.function.abbr, ">").concat(row.source.function.description, "</td>");
-        output += "<td title=\"".concat(row.source.extra.abbr, "\">").concat(row.source.extra.description, "</td>");
-        output += "<td title=\"".concat(row.destination.type.abbr, "\">").concat(row.destination.type.description, "</td>");
-        output += "<td title=\"".concat(row.destination.function.abbr, "\">").concat(row.destination.function.description, "</td>");
-        output += "<td title=\"".concat(row.destination.extra.abbr, "\">").concat(row.destination.extra.description, "</td>");
+        output += "<td title='".concat(row.source.type.abbr, "'>").concat(row.source.type.description, "</td>");
+        output += "<td title='".concat(row.source.function.abbr, "'>").concat(row.source.function.description, "</td>");
+        output += "<td title='".concat(row.source.extra.abbr, "'>").concat(row.source.extra.description, "</td>");
+        output += "<td title='".concat(row.destination.type.abbr, "'>").concat(row.destination.type.description, "</td>");
+        output += "<td title='".concat(row.destination.function.abbr, "'\">").concat(row.destination.function.description, "</td>");
+        output += "<td title='".concat(row.destination.extra.abbr, "'>").concat(row.destination.extra.description, "</td>");
         output += "</tr>";
     });
     output += "</tbody></table></tr><table ".concat(useBsStyles ? "class='table table-dark'" : '', ">");
