@@ -6,6 +6,7 @@ const fileInput = document.getElementById('fileInput') as HTMLInputElement;
 
 const buttonDownloadHtml = document.getElementById('buttonDownloadHtml') as HTMLButtonElement;
 const buttonDownloadMd = document.getElementById('buttonDownloadMd') as HTMLButtonElement;
+const buttonDownloadAbbrMd = document.getElementById('buttonDownloadAbbrMd') as HTMLButtonElement;
 const buttonDownloadJson = document.getElementById('buttonDownloadJson') as HTMLButtonElement;
 const buttonDownloadMap = document.getElementById('buttonDownloadMap') as HTMLButtonElement;
 const buttonReset = document.getElementById('buttonReset') as HTMLButtonElement;
@@ -18,6 +19,7 @@ const outPutDiv = document.getElementById('output') as HTMLDivElement;
 fileInput.addEventListener('change', readFile);
 buttonDownloadHtml.addEventListener('click', downloadHtml);
 buttonDownloadMd.addEventListener('click', downloadMarkdown);
+buttonDownloadAbbrMd.addEventListener('click', downloadAbbrMd);
 buttonDownloadJson.addEventListener('click', downloadJson);
 buttonDownloadMap.addEventListener('click', downloadMap);
 buttonReset.addEventListener('click', reset);
@@ -66,6 +68,12 @@ function downloadHtml() {
 
 function downloadMarkdown() {
     const output = formatters.toMarkdown(mapDoc);
+    const blob = new Blob([output], { type: "text/markdown" });
+    downloadFile(blob, `${mapDoc.header.fileName}.md`);
+}
+
+function downloadAbbrMd() {
+    const output = formatters.toMarkdown(mapDoc, true);
     const blob = new Blob([output], { type: "text/markdown" });
     downloadFile(blob, `${mapDoc.header.fileName}.md`);
 }

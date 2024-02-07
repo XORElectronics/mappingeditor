@@ -1,6 +1,7 @@
 
 const EMPTY_KEY = 65535;
-const EMPTY_TEXT = "----";
+const EMPTY_ABBR = "----";
+const EMPTY_DESCRIPTION = "----";
 
 export class MappingDocument {
     public static readonly ROW_COUNT = 70;
@@ -21,8 +22,24 @@ export class MappingDocument {
 
     constructor(header?: Header, rows?: Row[], variables?: Variable[]) {
         this._header = header ?? new Header();
+
         this._rows = rows ?? new Array<Row>(MappingDocument.ROW_COUNT);
+        // If rows is not provided, create a new row for each index in the array.
+        if (!rows) {
+            for (let rowCount = 0; rowCount < MappingDocument.ROW_COUNT; rowCount++) {
+                const newRow = new Row(rowCount, new Source(), new Destination());
+                this._rows[rowCount] = newRow;
+            }
+        }
+
         this._variables = variables ?? new Array<Variable>(MappingDocument.VARIABLE_COUNT);
+        // If variables is not provided, create a new variable for each index in the array.
+        if (!variables) {
+            for (let varCount = 0; varCount < MappingDocument.VARIABLE_COUNT; varCount++) {
+                const varName = String.fromCharCode(65 + varCount);
+                this._variables[varCount] = new Variable(`Variable ${varName}`);
+            }
+        }
     }
 }
 
@@ -32,7 +49,7 @@ export class Header {
     public static readonly DEFAULT_MAJOR_VERSION = 2;
     public static readonly DEFAULT_MINOR_VERSION = 0;
     public static readonly DEFAULT_VARIANT = "";
-    public static readonly DEFAULT_FILENAME = "MYMAP.MAP";
+    public static readonly DEFAULT_FILENAME = "DEFAULT";
 
     public get headerText(): string { return this._headerText; }
     public set headerText(value: string) { this._headerText = value; }
@@ -103,107 +120,57 @@ export class Source {
     private _extra: SourceExtra;
 
     constructor(type?: SourceType, func?: SourceFunction, extra?: SourceExtra) {
-        this._type = type ?? new SourceType();
-        this._function = func ?? new SourceFunction();
-        this._extra = extra ?? new SourceExtra();
+        this._type = type ?? new SourceType(EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION);
+        this._function = func ?? new SourceFunction(EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION);
+        this._extra = extra ?? new SourceExtra(EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION);
     }
 }
 
-
 export class SourceType {
-
     public get key(): number { return this._key; }
-    public set key(value: number) { this._key = value; }
-    public get text(): string { return this._text; }
-    public set text(value: string) { this._text = value; }
-    public get code(): string { return this._code; }
-    public set code(value: string) { this._code = value; }
+    public get abbr(): string { return this._abbr; }
     public get description(): string { return this._description; }
-    public set description(value: string) { this._description = value; }
 
     private _key: number;
-    private _text: string;
-    private _code: string;
+    private _abbr: string;
     private _description: string;
 
-    constructor(key?: number, text?: string, code?: string, description?: string) {
-        this._key = key ?? EMPTY_KEY;
-        this._text = text ?? EMPTY_TEXT;
-        this._code = code ?? EMPTY_TEXT;
-        this._description = description ?? "";
+    constructor(key: number, abbr: string, description: string) {
+        this._key = key;
+        this._abbr = abbr;
+        this._description = description;
     }
-
-    // TODO: Obviously cant just change the key since that will change the command. Will need to probably only set that on construction 
-    // and then make it readonly.
 }
 
 export class SourceFunction {
     public get key(): number { return this._key; }
-    public set key(value: number) { this._key = value; }
-    public get text(): string { return this._text; }
-    public set text(value: string) { this._text = value; }
-    public get code(): string { return this._code; }
-    public set code(value: string) { this._code = value; }
+    public get abbr(): string { return this._abbr; }
     public get description(): string { return this._description; }
-    public set description(value: string) { this._description = value; }
 
     private _key: number;
-    private _text: string;
-    private _code: string;
+    private _abbr: string;
     private _description: string;
 
-    constructor(key?: number, text?: string, code?: string, description?: string) {
-        this._key = key ?? EMPTY_KEY;
-        this._text = text ?? EMPTY_TEXT;
-        this._code = code ?? EMPTY_TEXT;
-        this._description = description ?? "";
+    constructor(key: number, abbr: string, description: string) {
+        this._key = key;
+        this._abbr = abbr;
+        this._description = description;
     }
 }
 
 export class SourceExtra {
-    public get key(): number { return this._key; }
-    public set key(value: number) { this._key = value; }
-    public get text(): string { return this._text; }
-    public set text(value: string) { this._text = value; }
-    public get code(): string { return this._code; }
-    public set code(value: string) { this._code = value; }
+    public get keyOrValue(): number { return this._keyOrValue; }
+    public get abbr(): string { return this._abbr; }
     public get description(): string { return this._description; }
-    public set description(value: string) { this._description = value; }
 
-    private _key: number;
-    private _text: string;
-    private _code: string;
+    private _keyOrValue: number;
+    private _abbr: string;
     private _description: string;
 
-    constructor(key?: number, text?: string, code?: string, description?: string) {
-        this._key = key ?? EMPTY_KEY;
-        this._text = text ?? EMPTY_TEXT;
-        this._code = code ?? EMPTY_TEXT;
-        this._description = description ?? "";
-    }
-}
-
-export class SourceExtraTuple extends SourceExtra {
-    public get key2(): number { return this._key2; }
-    public set key2(value: number) { this._key2 = value; }
-    public get text2(): string { return this._text2; }
-    public set text2(value: string) { this._text2 = value; }
-    public get code2(): string { return this._code2; }
-    public set code2(value: string) { this._code2 = value; }
-    public get description2(): string { return this._description2; }
-    public set description2(value: string) { this._description2 = value; }
-
-    private _key2: number;
-    private _text2: string;
-    private _code2: string;
-    private _description2: string;
-
-    constructor(key?: number, text?: string, code?: string, description?: string, key2?: number, text2?: string, code2?: string, description2?: string, value2?: number) {
-        super(key, text, code, description);
-        this._key2 = key2 ?? EMPTY_KEY;
-        this._text2 = text2 ?? EMPTY_TEXT;
-        this._code2 = code2 ?? EMPTY_TEXT;
-        this._description2 = description2 ?? "";
+    constructor(keyOrValue: number, abbr: string, description: string) {
+        this._keyOrValue = keyOrValue;
+        this._abbr = abbr;
+        this._description = description;
     }
 }
 
@@ -220,92 +187,70 @@ export class Destination {
     private _extra: DestinationExtra;
 
     constructor(type?: DestinationType, func?: DestinationFunction, extra?: DestinationExtra) {
-        this._type = type ?? new DestinationType();
-        this._function = func ?? new DestinationFunction();
-        this._extra = extra ?? new DestinationExtra();
+        this._type = type ?? new DestinationType(EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION);
+        this._function = func ?? new DestinationFunction(EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION);
+        this._extra = extra ?? new DestinationExtra(EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION);
     }
 }
 
 export class DestinationType {
     public get key(): number { return this._key; }
-    public set key(value: number) { this._key = value; }
-    public get text(): string { return this._text; }
-    public set text(value: string) { this._text = value; }
-    public get code(): string { return this._code; }
-    public set code(value: string) { this._code = value; }
+    public get abbr(): string { return this._abbr; }
     public get description(): string { return this._description; }
-    public set description(value: string) { this._description = value; }
 
     private _key: number;
-    private _text: string;
-    private _code: string;
+    private _abbr: string;
     private _description: string;
 
-    constructor(key?: number, text?: string, code?: string, description?: string) {
-        this._key = key ?? EMPTY_KEY;
-        this._text = text ?? EMPTY_TEXT;
-        this._code = code ?? EMPTY_TEXT;
-        this._description = description ?? "";
+    constructor(key: number, abbr: string, description: string) {
+        this._key = key;
+        this._abbr = abbr;
+        this._description = description;
     }
 }
 
 export class DestinationFunction {
     public get key(): number { return this._key; }
-    public set key(value: number) { this._key = value; }
-    public get text(): string { return this._text; }
-    public set text(value: string) { this._text = value; }
-    public get code(): string { return this._code; }
-    public set code(value: string) { this._code = value; }
+    public get abbr(): string { return this._abbr; }
     public get description(): string { return this._description; }
-    public set description(value: string) { this._description = value; }
 
     private _key: number;
-    private _text: string;
-    private _code: string;
+    private _abbr: string;
     private _description: string;
 
-    constructor(key?: number, text?: string, code?: string, description?: string) {
-        this._key = key ?? EMPTY_KEY;
-        this._text = text ?? EMPTY_TEXT;
-        this._code = code ?? EMPTY_TEXT;
-        this._description = description ?? "";
+    constructor(key: number, abbr: string, description: string) {
+        this._key = key;
+        this._description = description;
+        this._abbr = abbr;
     }
 }
 
 export class DestinationExtra {
-    public get key(): number { return this._key; }
-    public set key(value: number) { this._key = value; }
-    public get text(): string { return this._text; }
-    public set text(value: string) { this._text = value; }
-    public get code(): string { return this._code; }
-    public set code(value: string) { this._code = value; }
+    public get keyOrValue(): number { return this._keyOrValue; }
+    public get abbr(): string { return this._abbr; }
     public get description(): string { return this._description; }
-    public set description(value: string) { this._description = value; }
 
-    private _key: number;
-    private _text: string;
-    private _code: string;
+    private _keyOrValue: number;
+    private _abbr: string;
     private _description: string;
 
-    constructor(key?: number, text?: string, code?: string, description?: string) {
-        this._key = key ?? EMPTY_KEY;
-        this._text = text ?? EMPTY_TEXT;
-        this._code = code ?? EMPTY_TEXT;
-        this._description = description ?? "";
+    constructor(keyOrValue: number, abbr: string, description: string) {
+        this._keyOrValue = keyOrValue;
+        this._abbr = abbr;
+        this._description = description;
     }
 }
 
 export class Variable {
     public get name(): string { return this._name; }
-    public set name(value: string) { this._name = value; }
     public get value(): number { return this._value; }
     public set value(value: number) { this._value = value; }
 
     private _name: string;
     private _value: number;
 
-    constructor(name?: string, value?: number) {
-        this._name = name ?? "Unnamed Variable";
+    constructor(name: string, value?: number) {
+        this._name = name;
         this._value = value ?? 0;
     }
 }

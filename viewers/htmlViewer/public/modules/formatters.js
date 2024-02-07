@@ -12,12 +12,12 @@ export function toHtml(document, useBsStyles) {
     document.rows.forEach(function (row) {
         output += "<tr>";
         output += "<td>".concat(row.index, "</td>");
-        output += "<td>".concat(row.source.type.text, "</td>");
-        output += "<td>".concat(row.source.function.text, "</td>");
-        output += "<td>".concat(row.source.extra.text, "</td>");
-        output += "<td>".concat(row.destination.type.text, "</td>");
-        output += "<td>".concat(row.destination.function.text, "</td>");
-        output += "<td>".concat(row.destination.extra.text, "</td>");
+        output += "<td title=\"".concat(row.source.type.abbr, "\">").concat(row.source.type.description, "</td>");
+        output += "<td title=\"".concat(row.source.function.abbr, ">").concat(row.source.function.description, "</td>");
+        output += "<td title=\"".concat(row.source.extra.abbr, "\">").concat(row.source.extra.description, "</td>");
+        output += "<td title=\"".concat(row.destination.type.abbr, "\">").concat(row.destination.type.description, "</td>");
+        output += "<td title=\"".concat(row.destination.function.abbr, "\">").concat(row.destination.function.description, "</td>");
+        output += "<td title=\"".concat(row.destination.extra.abbr, "\">").concat(row.destination.extra.description, "</td>");
         output += "</tr>";
     });
     output += "</tbody></table></tr><table ".concat(useBsStyles ? "class='table table-dark'" : '', ">");
@@ -27,7 +27,8 @@ export function toHtml(document, useBsStyles) {
     output += "</tbody></table>";
     return output;
 }
-export function toMarkdown(document) {
+export function toMarkdown(document, useAbbrivations) {
+    if (useAbbrivations === void 0) { useAbbrivations = false; }
     var output = "# NerdSeq Mapping File\n\n";
     output += "## Header\n\n";
     output += "| Property | Value |\n";
@@ -40,7 +41,11 @@ export function toMarkdown(document) {
     output += "| Index | Source Type | Source Function | Source Extra | Destination Type | Destination Function | Destination Extra |\n";
     output += "| --- | --- | --- | --- | --- | --- | --- |\n";
     document.rows.forEach(function (row) {
-        output += "| ".concat(row.index, " | ").concat(row.source.type.text, " | ").concat(row.source.function.text, " | ").concat(row.source.extra.text, " | ").concat(row.destination.type.text, " | ").concat(row.destination.function.text, " | ").concat(row.destination.extra.text, " |\n");
+        if (useAbbrivations) {
+            output += "| ".concat(row.index.toString(16).toUpperCase().padStart(2, '0'), " | ").concat(row.source.type.abbr, " | ").concat(row.source.function.abbr, " | ").concat(row.source.extra.abbr, " | ").concat(row.destination.type.abbr, " | ").concat(row.destination.function.abbr, " | ").concat(row.destination.extra.abbr, " |\n");
+            return;
+        }
+        output += "| ".concat(row.index, " | ").concat(row.source.type.description, " | ").concat(row.source.function.description, " | ").concat(row.source.extra.description, " | ").concat(row.destination.type.description, " | ").concat(row.destination.function.description, " | ").concat(row.destination.extra.description, " |\n");
     });
     output += "\n## Variables\n\n";
     output += "| Name | Value |\n";
@@ -82,10 +87,10 @@ export function toBlob(document) {
     document.rows.forEach(function (row) {
         parts.push(numToUint8Array(row.source.type.key));
         parts.push(numToUint8Array(row.source.function.key));
-        parts.push(numToUint8Array(row.source.extra.key));
+        parts.push(numToUint8Array(row.source.extra.keyOrValue));
         parts.push(numToUint8Array(row.destination.type.key));
         parts.push(numToUint8Array(row.destination.function.key));
-        parts.push(numToUint8Array(row.destination.extra.key));
+        parts.push(numToUint8Array(row.destination.extra.keyOrValue));
         parts.push(new Uint8Array(ROW_UNUSED_LENGTH).fill(UNUSED_FILLER));
     });
     // Serialize variables

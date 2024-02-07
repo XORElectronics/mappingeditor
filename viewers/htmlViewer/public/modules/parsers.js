@@ -96,7 +96,7 @@ var SourceTypeParser = /** @class */ (function () {
         if (!sourceMappingType) {
             throw new Error("Unknown source type ".concat(key));
         }
-        var sourceType = new docModel.SourceType(sourceMappingType.key, sourceMappingType.value);
+        var sourceType = new docModel.SourceType(sourceMappingType.key, sourceMappingType.abbr, sourceMappingType.description);
         return [sourceType, sourceMappingType];
     };
     return SourceTypeParser;
@@ -109,7 +109,7 @@ var SourceFunctionParser = /** @class */ (function () {
         if (!sourceMappingFunction) {
             throw new Error("Unknown source function ".concat(key, " for source type ").concat(sourceTypeLookup.key));
         }
-        var sourceFunction = new docModel.SourceFunction(sourceMappingFunction.key, sourceMappingFunction.value);
+        var sourceFunction = new docModel.SourceFunction(sourceMappingFunction.key, sourceMappingFunction.abbr, sourceMappingFunction.description);
         return sourceFunction;
     };
     return SourceFunctionParser;
@@ -122,37 +122,27 @@ var SourceExtraParser = /** @class */ (function () {
             throw new Error("sourceTypeLookup is null or undefined");
         }
         if (key === dataModel.EMPTY_KEY) {
-            return new docModel.SourceExtra();
+            return new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
         }
         var sourceExtra;
         switch (sourceMappingType.key) {
-            case dataModel.MIDI_RPN_SOURCE_TYPE_KEY:
+            case dataModel.MIDI_NRPN_SOURCE_TYPE_KEY:
                 {
-                    if (key > 9999) { // TODO: const somewhere
-                        throw new Error("Unexpected RPN value ".concat(key));
-                    }
-                    sourceExtra = new docModel.SourceExtra(key, "NPRN Controller #".concat(key));
+                    var _a = dataModel.genNrpnSourceExtraDnA(key), abbr = _a.abbr, description = _a.description;
+                    sourceExtra = new docModel.SourceExtra(key, abbr, description);
                     break;
                 }
             case dataModel.VAR_SOURCE_TYPE_KEY:
                 {
-                    if (key === 0) {
-                        sourceExtra = new docModel.SourceExtra(0, "Set Variable/Row to ".concat(key - 1));
-                        break;
-                    }
-                    if (key > 4095) {
-                        throw new Error("Unexpected Variable value ".concat(key));
-                    }
-                    sourceExtra = new docModel.SourceExtra(key, "Set Variable/Row to ".concat((key - 1).toString(16), "h (").concat(key - 1, ")"));
+                    var _b = dataModel.genVarSourceExtraDnA(key), abbr = _b.abbr, description = _b.description;
+                    sourceExtra = new docModel.SourceExtra(key, abbr, description);
                     break;
                 }
             case dataModel.CALC_SOURCE_TYPE_KEY:
             case dataModel.SKIP_SOURCE_TYPE_KEY:
                 {
-                    var highByte = (key & 0xFF00) >> 8;
-                    var lowByte = key & 0x00FF;
-                    sourceExtra = new docModel.SourceExtra(key, "".concat(dataModel.decodeByteExtra(highByte), " | ").concat(dataModel.decodeByteExtra(lowByte)));
-                    // TODO: will probably need a different type for these 2 value extras
+                    var _c = dataModel.genCalcSkipSourceExtraDnA(key), abbr = _c.abbr, description = _c.description;
+                    sourceExtra = new docModel.SourceExtra(key, abbr, description);
                     break;
                 }
             case dataModel.EXTERNAL_SOURCE_TYPE_KEY:
@@ -160,7 +150,7 @@ var SourceExtraParser = /** @class */ (function () {
                     switch (sourceFunctionKey) {
                         case dataModel.EMPTY_KEY:
                             {
-                                sourceExtra = new docModel.SourceExtra();
+                                sourceExtra = new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
                                 break;
                             }
                         case dataModel.KEYBOARD_EXTERNAL_SOURCE_FUNCTION_KEY:
@@ -169,7 +159,7 @@ var SourceExtraParser = /** @class */ (function () {
                                 if (!sourceEx) {
                                     throw new Error("Unknown Keyboard Source Function Extra ".concat(key));
                                 }
-                                sourceExtra = new docModel.SourceExtra(key, "".concat(sourceEx.value));
+                                sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                                 break;
                             }
                         case dataModel.SEGA_GAMEPAD_EXTERNAL_SOURCE_FUNCTION_KEY:
@@ -178,7 +168,7 @@ var SourceExtraParser = /** @class */ (function () {
                                 if (!sourceEx) {
                                     throw new Error("Unknown Sega GamePad Source Function Extra ".concat(key));
                                 }
-                                sourceExtra = new docModel.SourceExtra(key, "".concat(sourceEx.value));
+                                sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                                 break;
                             }
                         default:
@@ -193,14 +183,15 @@ var SourceExtraParser = /** @class */ (function () {
                     if (!sourceEx) {
                         throw new Error("Unknown Source Function Extra ".concat(key));
                     }
-                    sourceExtra = new docModel.SourceExtra(key, "".concat(sourceEx.value));
+                    sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                     break;
                 }
         }
-        return sourceExtra !== null && sourceExtra !== void 0 ? sourceExtra : new docModel.SourceExtra();
+        return sourceExtra !== null && sourceExtra !== void 0 ? sourceExtra : new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
     };
     return SourceExtraParser;
 }());
+export { SourceExtraParser };
 var DestinationParser = /** @class */ (function () {
     function DestinationParser() {
     }
@@ -227,7 +218,7 @@ var DestinationTypeParser = /** @class */ (function () {
             throw new Error("Unknown source type ".concat(key));
         }
         ;
-        var destinationType = new docModel.DestinationType(destinationMappingType.key, destinationMappingType.value);
+        var destinationType = new docModel.DestinationType(destinationMappingType.key, destinationMappingType.abbr, destinationMappingType.description);
         return [destinationType, destinationMappingType];
     };
     return DestinationTypeParser;
@@ -240,7 +231,7 @@ var DestinationFunctionParser = /** @class */ (function () {
         if (!destinationFunctionLookup) {
             throw new Error("Unknown source type ".concat(key));
         }
-        var sourceFunction = new docModel.DestinationFunction(destinationFunctionLookup.key, destinationFunctionLookup.value);
+        var sourceFunction = new docModel.DestinationFunction(destinationFunctionLookup.key, destinationFunctionLookup.abbr, destinationFunctionLookup.description);
         return sourceFunction;
     };
     return DestinationFunctionParser;
@@ -253,7 +244,7 @@ var DestinationExtraParser = /** @class */ (function () {
             throw new Error("destinationMappingType is null or undefined");
         }
         if (key === dataModel.EMPTY_KEY) {
-            return new docModel.DestinationExtra();
+            return new docModel.DestinationExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
         }
         var destinationExtra;
         switch (destinationMappingType.key) {
@@ -266,7 +257,7 @@ var DestinationExtraParser = /** @class */ (function () {
                                 if (!destExtra) {
                                     throw new Error("Unknown Global Buttons Destination Function Extra ".concat(key));
                                 }
-                                destinationExtra = new docModel.DestinationExtra(key, "".concat(destExtra.value));
+                                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                                 break;
                             }
                         case dataModel.GLOBAL_SCREENS_DESTINATION_FUNCTION_KEY:
@@ -275,7 +266,7 @@ var DestinationExtraParser = /** @class */ (function () {
                                 if (!destExtra) {
                                     throw new Error("Unknown Global Screens Destination Function Extra ".concat(key));
                                 }
-                                destinationExtra = new docModel.DestinationExtra(key, "".concat(destExtra.value));
+                                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                                 break;
                             }
                         case dataModel.GLOBAL_MODES_DESTINATION_FUNCTION_KEY:
@@ -284,7 +275,7 @@ var DestinationExtraParser = /** @class */ (function () {
                                 if (!destExtra) {
                                     throw new Error("Unknown Global Modes Destination Function Extra ".concat(key));
                                 }
-                                destinationExtra = new docModel.DestinationExtra(key, "".concat(destExtra.value));
+                                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                                 break;
                             }
                         default:
@@ -295,14 +286,9 @@ var DestinationExtraParser = /** @class */ (function () {
                 }
             case dataModel.MIDI_CC_DESTINATION_TYPE_KEY:
                 {
-                    if (key >= 128 && key <= 10127) {
-                        destinationExtra = new docModel.DestinationExtra(key, "Midi NRPN Controller #".concat(key - 128, "}"));
-                        break;
-                    }
-                    if (key > 10127 && key !== dataModel.EMPTY_KEY) {
-                        throw new Error("Unexpected Midi CC value ".concat(key));
-                    }
-                    // Should fall through to default if none of the above are true
+                    var _a = dataModel.genMidiCcDestinationDnA(key), abbr = _a.abbr, description = _a.description;
+                    destinationExtra = new docModel.DestinationExtra(key, abbr, description);
+                    break;
                 }
             default:
                 {
@@ -310,11 +296,11 @@ var DestinationExtraParser = /** @class */ (function () {
                     if (!destExtra) {
                         throw new Error("Unknown Destination Function Extra ".concat(key));
                     }
-                    destinationExtra = new docModel.DestinationExtra(key, "".concat(destExtra.value));
+                    destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                     break;
                 }
         }
-        return destinationExtra !== null && destinationExtra !== void 0 ? destinationExtra : new docModel.DestinationExtra();
+        return destinationExtra !== null && destinationExtra !== void 0 ? destinationExtra : new docModel.DestinationExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
     };
     return DestinationExtraParser;
 }());
@@ -324,9 +310,9 @@ var VariablesParser = /** @class */ (function () {
     VariablesParser.parse = function (buffer) {
         var variables = new Array(VariablesParser.VARIABLE_COUNT);
         for (var index = 0; index < VariablesParser.VARIABLE_COUNT; index++) {
-            var variable = new docModel.Variable();
-            variable.name = "Variable ".concat(String.fromCharCode(65 + index));
-            variable.value = buffer[index];
+            var varName = "Variable ".concat(String.fromCharCode(65 + index));
+            var varValue = buffer[index];
+            var variable = new docModel.Variable(varName, varValue);
             variables[index] = variable;
         }
         return variables;

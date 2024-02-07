@@ -13,12 +13,12 @@ export function toHtml(document: MappingDocument, useBsStyles: boolean = false):
     document.rows.forEach(row => {
         output += `<tr>`;
         output += `<td>${row.index}</td>`;
-        output += `<td>${row.source.type.text}</td>`;
-        output += `<td>${row.source.function.text}</td>`;
-        output += `<td>${row.source.extra.text}</td>`;
-        output += `<td>${row.destination.type.text}</td>`;
-        output += `<td>${row.destination.function.text}</td>`;
-        output += `<td>${row.destination.extra.text}</td>`;
+        output += `<td title="${row.source.type.abbr}">${row.source.type.description}</td>`;
+        output += `<td title="${row.source.function.abbr}>${row.source.function.description}</td>`;
+        output += `<td title="${row.source.extra.abbr}">${row.source.extra.description}</td>`;
+        output += `<td title="${row.destination.type.abbr}">${row.destination.type.description}</td>`;
+        output += `<td title="${row.destination.function.abbr}">${row.destination.function.description}</td>`;
+        output += `<td title="${row.destination.extra.abbr}">${row.destination.extra.description}</td>`;
         output += `</tr>`;
     });
     output += `</tbody></table></tr><table ${useBsStyles ? "class='table table-dark'" : ''}>`;
@@ -29,7 +29,7 @@ export function toHtml(document: MappingDocument, useBsStyles: boolean = false):
     return output;
 }
 
-export function toMarkdown(document: MappingDocument): string {
+export function toMarkdown(document: MappingDocument, useAbbrivations: boolean = false): string {
     let output = `# NerdSeq Mapping File\n\n`;
     output += `## Header\n\n`;
     output += `| Property | Value |\n`;
@@ -42,7 +42,11 @@ export function toMarkdown(document: MappingDocument): string {
     output += `| Index | Source Type | Source Function | Source Extra | Destination Type | Destination Function | Destination Extra |\n`;
     output += `| --- | --- | --- | --- | --- | --- | --- |\n`;
     document.rows.forEach(row => {
-        output += `| ${row.index} | ${row.source.type.text} | ${row.source.function.text} | ${row.source.extra.text} | ${row.destination.type.text} | ${row.destination.function.text} | ${row.destination.extra.text} |\n`;
+        if (useAbbrivations) {
+            output += `| ${row.index.toString(16).toUpperCase().padStart(2, '0')} | ${row.source.type.abbr} | ${row.source.function.abbr} | ${row.source.extra.abbr} | ${row.destination.type.abbr} | ${row.destination.function.abbr} | ${row.destination.extra.abbr} |\n`;
+            return;
+        }
+        output += `| ${row.index} | ${row.source.type.description} | ${row.source.function.description} | ${row.source.extra.description} | ${row.destination.type.description} | ${row.destination.function.description} | ${row.destination.extra.description} |\n`;
     });
     output += `\n## Variables\n\n`;
     output += `| Name | Value |\n`;
@@ -56,7 +60,6 @@ export function toMarkdown(document: MappingDocument): string {
 export function toJson(document: MappingDocument): string {
     return JSON.stringify(document);
 }
-
 
 function numToUint8Array(value: number): Uint8Array {
     let uint16Array = new Uint16Array([value]);
@@ -83,7 +86,7 @@ export function toBlob(document: MappingDocument): Blob {
     parts.push(encodedHeaderText);
     parts.push(new Uint8Array([document.header.majorVersion]));
     parts.push(new Uint8Array([document.header.minorVersion]));
-    const encodedFileName  = encoder.encode(document.header.fileName.padEnd(FILE_NAME_LENGTH, '\0')).slice(0, FILE_NAME_LENGTH);
+    const encodedFileName = encoder.encode(document.header.fileName.padEnd(FILE_NAME_LENGTH, '\0')).slice(0, FILE_NAME_LENGTH);
     parts.push(encodedFileName);
     parts.push(new Uint8Array(HEADER_RESERVED_LENGTH).fill(UNUSED_FILLER));
 
@@ -91,10 +94,10 @@ export function toBlob(document: MappingDocument): Blob {
     document.rows.forEach(row => {
         parts.push(numToUint8Array(row.source.type.key));
         parts.push(numToUint8Array(row.source.function.key));
-        parts.push(numToUint8Array(row.source.extra.key));
+        parts.push(numToUint8Array(row.source.extra.keyOrValue));
         parts.push(numToUint8Array(row.destination.type.key));
         parts.push(numToUint8Array(row.destination.function.key));
-        parts.push(numToUint8Array(row.destination.extra.key));
+        parts.push(numToUint8Array(row.destination.extra.keyOrValue));
         parts.push(new Uint8Array(ROW_UNUSED_LENGTH).fill(UNUSED_FILLER));
     });
 

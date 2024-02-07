@@ -39,6 +39,7 @@ import * as formatters from './formatters.js';
 var fileInput = document.getElementById('fileInput');
 var buttonDownloadHtml = document.getElementById('buttonDownloadHtml');
 var buttonDownloadMd = document.getElementById('buttonDownloadMd');
+var buttonDownloadAbbrMd = document.getElementById('buttonDownloadAbbrMd');
 var buttonDownloadJson = document.getElementById('buttonDownloadJson');
 var buttonDownloadMap = document.getElementById('buttonDownloadMap');
 var buttonReset = document.getElementById('buttonReset');
@@ -48,6 +49,7 @@ var outPutDiv = document.getElementById('output');
 fileInput.addEventListener('change', readFile);
 buttonDownloadHtml.addEventListener('click', downloadHtml);
 buttonDownloadMd.addEventListener('click', downloadMarkdown);
+buttonDownloadAbbrMd.addEventListener('click', downloadAbbrMd);
 buttonDownloadJson.addEventListener('click', downloadJson);
 buttonDownloadMap.addEventListener('click', downloadMap);
 buttonReset.addEventListener('click', reset);
@@ -93,6 +95,11 @@ function downloadHtml() {
 }
 function downloadMarkdown() {
     var output = formatters.toMarkdown(mapDoc);
+    var blob = new Blob([output], { type: "text/markdown" });
+    downloadFile(blob, "".concat(mapDoc.header.fileName, ".md"));
+}
+function downloadAbbrMd() {
+    var output = formatters.toMarkdown(mapDoc, true);
     var blob = new Blob([output], { type: "text/markdown" });
     downloadFile(blob, "".concat(mapDoc.header.fileName, ".md"));
 }

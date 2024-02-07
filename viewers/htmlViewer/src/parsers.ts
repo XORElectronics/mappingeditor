@@ -91,23 +91,23 @@ class SourceTypeParser {
     if (!sourceMappingType) {
       throw new Error(`Unknown source type ${key}`);
     }
-    const sourceType = new docModel.SourceType(sourceMappingType.key, sourceMappingType.value)
+    const sourceType = new docModel.SourceType(sourceMappingType.key, sourceMappingType.abbr, sourceMappingType.description)
     return [sourceType, sourceMappingType];
   }
 }
 
 class SourceFunctionParser {
   public static parse(key: number, sourceTypeLookup: dataModel.MappingType): docModel.SourceFunction {
-    const sourceMappingFunction = sourceTypeLookup?.functions.find((c) => c.key === key) as dataModel.MappingKeyValuePair;
+    const sourceMappingFunction = sourceTypeLookup?.functions.find((c) => c.key === key) as dataModel.MappingTuple;
     if (!sourceMappingFunction) {
       throw new Error(`Unknown source function ${key} for source type ${sourceTypeLookup.key}`);
     }
-    const sourceFunction = new docModel.SourceFunction(sourceMappingFunction.key, sourceMappingFunction.value);
+    const sourceFunction = new docModel.SourceFunction(sourceMappingFunction.key, sourceMappingFunction.abbr, sourceMappingFunction.description);
     return sourceFunction;
   }
 }
 
-class SourceExtraParser {
+export class SourceExtraParser {
   public static parse(key: number, sourceFunctionKey: number, sourceMappingType: dataModel.MappingType): docModel.SourceExtra {
     if
       (!sourceMappingType) {
@@ -115,41 +115,29 @@ class SourceExtraParser {
     }
 
     if (key === dataModel.EMPTY_KEY) {
-      return new docModel.SourceExtra();
+      return new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
     }
 
     let sourceExtra: docModel.SourceExtra;
 
     switch (sourceMappingType.key) {
-      case dataModel.MIDI_RPN_SOURCE_TYPE_KEY:
+      case dataModel.MIDI_NRPN_SOURCE_TYPE_KEY:
         {
-          if (key > 9999) { // TODO: const somewhere
-            throw new Error(`Unexpected RPN value ${key}`);
-          }
-          sourceExtra = new docModel.SourceExtra(key, `NPRN Controller #${key}`);
+          const { abbr, description } = dataModel.genNrpnSourceExtraDnA(key);
+          sourceExtra = new docModel.SourceExtra(key, abbr, description);
           break;
         }
       case dataModel.VAR_SOURCE_TYPE_KEY:
         {
-          if (key === 0) {
-            sourceExtra = new docModel.SourceExtra(0, `Set Variable/Row to ${key - 1}`);
-            break;
-          }
-
-          if (key > 4095) {
-            throw new Error(`Unexpected Variable value ${key}`);
-          }
-
-          sourceExtra = new docModel.SourceExtra(key, `Set Variable/Row to ${(key - 1).toString(16)}h (${key - 1})`);
+          const { abbr, description } = dataModel.genVarSourceExtraDnA(key);
+          sourceExtra = new docModel.SourceExtra(key, abbr, description);
           break;
         }
       case dataModel.CALC_SOURCE_TYPE_KEY:
       case dataModel.SKIP_SOURCE_TYPE_KEY:
         {
-          let highByte = (key & 0xFF00) >> 8;
-          let lowByte = key & 0x00FF;
-          sourceExtra = new docModel.SourceExtra(key, `${dataModel.decodeByteExtra(highByte)} | ${dataModel.decodeByteExtra(lowByte)}`);
-          // TODO: will probably need a different type for these 2 value extras
+          const { abbr, description } = dataModel.genCalcSkipSourceExtraDnA(key);
+          sourceExtra = new docModel.SourceExtra(key, abbr, description);
           break;
         }
       case dataModel.EXTERNAL_SOURCE_TYPE_KEY:
@@ -157,25 +145,25 @@ class SourceExtraParser {
           switch (sourceFunctionKey) {
             case dataModel.EMPTY_KEY:
               {
-                sourceExtra = new docModel.SourceExtra();
+                sourceExtra = new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
                 break;
               }
             case dataModel.KEYBOARD_EXTERNAL_SOURCE_FUNCTION_KEY:
               {
-                const sourceEx = dataModel.keyboardSourceExtras.find((c) => c.key === key) as dataModel.MappingKeyValuePair
+                const sourceEx = dataModel.keyboardSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
                 if (!sourceEx) {
                   throw new Error(`Unknown Keyboard Source Function Extra ${key}`);
                 }
-                sourceExtra = new docModel.SourceExtra(key, `${sourceEx.value}`);
+                sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                 break;
               }
             case dataModel.SEGA_GAMEPAD_EXTERNAL_SOURCE_FUNCTION_KEY:
               {
-                const sourceEx = dataModel.keyboardSourceExtras.find((c) => c.key === key) as dataModel.MappingKeyValuePair
+                const sourceEx = dataModel.keyboardSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
                 if (!sourceEx) {
                   throw new Error(`Unknown Sega GamePad Source Function Extra ${key}`);
                 }
-                sourceExtra = new docModel.SourceExtra(key, `${sourceEx.value}`);
+                sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                 break;
               }
             default:
@@ -186,15 +174,15 @@ class SourceExtraParser {
         }
       default:
         {
-          const sourceEx = sourceMappingType?.extras.find((e) => e.key === key) as dataModel.MappingKeyValuePair;
+          const sourceEx = sourceMappingType?.extras.find((e) => e.key === key) as dataModel.MappingTuple;
           if (!sourceEx) {
             throw new Error(`Unknown Source Function Extra ${key}`);
           }
-          sourceExtra = new docModel.SourceExtra(key, `${sourceEx.value}`);
+          sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
           break;
         }
     }
-    return sourceExtra ?? new docModel.SourceExtra();
+    return sourceExtra ?? new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
   }
 }
 
@@ -218,18 +206,18 @@ class DestinationTypeParser {
     if (!destinationMappingType) {
       throw new Error(`Unknown source type ${key}`);
     };
-    const destinationType = new docModel.DestinationType(destinationMappingType.key, destinationMappingType.value)
+    const destinationType = new docModel.DestinationType(destinationMappingType.key, destinationMappingType.abbr, destinationMappingType.description)
     return [destinationType, destinationMappingType];
   }
 }
 
 class DestinationFunctionParser {
   public static parse(key: number, destinationMappingType: dataModel.MappingType): docModel.DestinationFunction {
-    const destinationFunctionLookup = destinationMappingType?.functions.find((c) => c.key === key) as dataModel.MappingKeyValuePair;
+    const destinationFunctionLookup = destinationMappingType?.functions.find((c) => c.key === key) as dataModel.MappingTuple;
     if (!destinationFunctionLookup) {
       throw new Error(`Unknown source type ${key}`);
     }
-    const sourceFunction = new docModel.DestinationFunction(destinationFunctionLookup.key, destinationFunctionLookup.value);
+    const sourceFunction = new docModel.DestinationFunction(destinationFunctionLookup.key, destinationFunctionLookup.abbr, destinationFunctionLookup.description);
     return sourceFunction;
   }
 }
@@ -242,7 +230,7 @@ class DestinationExtraParser {
     }
 
     if (key === dataModel.EMPTY_KEY) {
-      return new docModel.DestinationExtra();
+      return new docModel.DestinationExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
     }
 
     let destinationExtra: docModel.DestinationExtra;
@@ -253,29 +241,29 @@ class DestinationExtraParser {
           switch (destinationFunctionKey) {
             case dataModel.GLOBAL_BUTTONS_DESTINATION_FUNCTION_KEY:
               {
-                const destExtra = dataModel.globalButtonsDestinationExtras.find((e) => e.key === key) as dataModel.MappingKeyValuePair;
+                const destExtra = dataModel.globalButtonsDestinationExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
                   throw new Error(`Unknown Global Buttons Destination Function Extra ${key}`);
                 }
-                destinationExtra = new docModel.DestinationExtra(key, `${destExtra.value}`);
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
               }
             case dataModel.GLOBAL_SCREENS_DESTINATION_FUNCTION_KEY:
               {
-                const destExtra = dataModel.globalScreensDestinationExtras.find((e) => e.key === key) as dataModel.MappingKeyValuePair;
+                const destExtra = dataModel.globalScreensDestinationExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
                   throw new Error(`Unknown Global Screens Destination Function Extra ${key}`);
                 }
-                destinationExtra = new docModel.DestinationExtra(key, `${destExtra.value}`);
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
               }
             case dataModel.GLOBAL_MODES_DESTINATION_FUNCTION_KEY:
               {
-                const destExtra = dataModel.globalModesDestinationExtras.find((e) => e.key === key) as dataModel.MappingKeyValuePair;
+                const destExtra = dataModel.globalModesDestinationExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
                   throw new Error(`Unknown Global Modes Destination Function Extra ${key}`);
                 }
-                destinationExtra = new docModel.DestinationExtra(key, `${destExtra.value}`);
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
               }
             default:
@@ -286,27 +274,21 @@ class DestinationExtraParser {
         }
       case dataModel.MIDI_CC_DESTINATION_TYPE_KEY:
         {
-          if (key >= 128 && key <= 10127) {
-            destinationExtra = new docModel.DestinationExtra(key, `Midi NRPN Controller #${key - 128}}`);
-            break;
-          }
-
-          if (key > 10127 && key !== dataModel.EMPTY_KEY) {
-            throw new Error(`Unexpected Midi CC value ${key}`);
-          }
-          // Should fall through to default if none of the above are true
+          const { abbr, description } = dataModel.genMidiCcDestinationDnA(key);
+          destinationExtra = new docModel.DestinationExtra(key, abbr, description);
+          break
         }
       default:
         {
-          const destExtra = destinationMappingType?.extras.find((e) => e.key === key) as dataModel.MappingKeyValuePair;
+          const destExtra = destinationMappingType?.extras.find((e) => e.key === key) as dataModel.MappingTuple;
           if (!destExtra) {
             throw new Error(`Unknown Destination Function Extra ${key}`);
           }
-          destinationExtra = new docModel.DestinationExtra(key, `${destExtra.value}`);
+          destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
           break;
         }
     }
-    return destinationExtra ?? new docModel.DestinationExtra();
+    return destinationExtra ?? new docModel.DestinationExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
   }
 }
 
@@ -317,9 +299,9 @@ class VariablesParser {
     const variables: docModel.Variable[] = new Array<docModel.Variable>(VariablesParser.VARIABLE_COUNT);
 
     for (let index = 0; index < VariablesParser.VARIABLE_COUNT; index++) {
-      const variable = new docModel.Variable();
-      variable.name = `Variable ${String.fromCharCode(65 + index)}`;
-      variable.value = buffer[index];
+      const varName = `Variable ${String.fromCharCode(65 + index)}`;
+      const varValue = buffer[index];
+      const variable = new docModel.Variable(varName, varValue);
       variables[index] = variable;
     }
 
