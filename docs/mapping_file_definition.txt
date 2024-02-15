@@ -1,4 +1,4 @@
-MAPPING FILE DEFINITION (NerdSEQ Mapping save file V2.0C):
+MAPPING FILE DEFINITION (NerdSEQ Mapping save file V2.1):
 
 Filename is *.MAP
 
@@ -77,9 +77,10 @@ Source definitions per Base type:
 		2 [VELO]Midi Velocity
 		3 [PRSR]Midi Channel Pressure
 		4 [BEND]Midi Pitchbend
-		5..124 [C-0N]..[B-9N]Selected Midi Note 0-119 On/Off
-		125..244 [C-0V]..[B-9V]Selected Midi Note 0-119 Velocity
-		245..364 [C-0A]..[B-9A]Selected Midi Note 0-119 Aftertouch
+		5 [PGMC]Midi Program Change
+		6..125 [C-0N]..[B-9N]Selected Midi Note 0-119 On/Off
+		126..245 [C-0V]..[B-9V]Selected Midi Note 0-119 Velocity
+		246..365 [C-0A]..[B-9A]Selected Midi Note 0-119 Aftertouch
 
 6 [MCC ]<SOURCE_MIDI_CC_BASE>
 	<SOURCE_MIDI_CC_FUNCTION>
@@ -164,6 +165,7 @@ Source definitions per Base type:
 	45 [RNGE]Range former row between A and B
 	46 [FORC]Force Value to Destination
 	47 [PULS]Generate Onetime Pulse if A is getting bigger than B
+	48 [MODS]Signed Modulo
 			<SOURCE_CALC_EXTRA>
 		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
 		Value definition of an operand:  (first 2 digits is value A and 2nd 2 digits is value B) [=0=3] or [=2VB] or [2CVA] or [VCVA] or [VB=9] or [00] etc...
@@ -366,8 +368,8 @@ Destination definitions per Base type:
 		<DESTINATION_AUDIO_EXTRA>
 		0 [PTCH]Pitch
 		1 [NOTE]Note
-		2 [GATE]Gate
-		3 [ONOF]Start/Stop Wave
+		2 [GATE]Gate / Start Wave/Sample
+		3 [ONOF]Stop Wave/Sample
 		4 [WAVE]Sample/Waveform
 		5 [OFFS]Offset
 		6 [BACK]Backwards
@@ -512,3 +514,4 @@ Destination definitions per Base type:
 		1 [NTOF]Note Off
 		2 [NOTE]Note OnOff
 		3 [PBND]Pitchbend
+		4 [PGMC]Program Change
