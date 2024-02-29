@@ -1,0 +1,282 @@
+{
+    "type": "object",
+    "required": [],
+    "properties": {
+      "_header": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "_headerText": {
+            "type": "string"
+          },
+          "_majorVersion": {
+            "type": "integer"
+          },
+          "_minorVersion": {
+            "type": "integer"
+          },
+          "_variant": {
+            "type": "string"
+          },
+          "_filename": {
+            "type": "string"
+          },
+          "_reserved": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "0": {
+                "type": "integer"
+              },
+              "1": {
+                "type": "integer"
+              },
+              "2": {
+                "type": "integer"
+              },
+              "3": {
+                "type": "integer"
+              },
+              "4": {
+                "type": "integer"
+              },
+              "5": {
+                "type": "integer"
+              },
+              "6": {
+                "type": "integer"
+              },
+              "7": {
+                "type": "integer"
+              },
+              "8": {
+                "type": "integer"
+              },
+              "9": {
+                "type": "integer"
+              },
+              "10": {
+                "type": "integer"
+              },
+              "11": {
+                "type": "integer"
+              },
+              "12": {
+                "type": "integer"
+              },
+              "13": {
+                "type": "integer"
+              },
+              "14": {
+                "type": "integer"
+              },
+              "15": {
+                "type": "integer"
+              },
+              "16": {
+                "type": "integer"
+              },
+              "17": {
+                "type": "integer"
+              },
+              "18": {
+                "type": "integer"
+              },
+              "19": {
+                "type": "integer"
+              },
+              "20": {
+                "type": "integer"
+              },
+              "21": {
+                "type": "integer"
+              },
+              "22": {
+                "type": "integer"
+              },
+              "23": {
+                "type": "integer"
+              },
+              "24": {
+                "type": "integer"
+              },
+              "25": {
+                "type": "integer"
+              },
+              "26": {
+                "type": "integer"
+              },
+              "27": {
+                "type": "integer"
+              },
+              "28": {
+                "type": "integer"
+              },
+              "29": {
+                "type": "integer"
+              },
+              "30": {
+                "type": "integer"
+              },
+              "31": {
+                "type": "integer"
+              },
+              "32": {
+                "type": "integer"
+              },
+              "33": {
+                "type": "integer"
+              },
+              "34": {
+                "type": "integer"
+              },
+              "35": {
+                "type": "integer"
+              },
+              "36": {
+                "type": "integer"
+              },
+              "37": {
+                "type": "integer"
+              },
+              "38": {
+                "type": "integer"
+              },
+              "39": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "_rows": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "_index": {
+              "type": "integer"
+            },
+            "_source": {
+              "type": "object",
+              "required": [],
+              "properties": {
+                "_type": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "_key": {
+                      "type": "number"
+                    },
+                    "_abbr": {
+                      "type": "string"
+                    },
+                    "_description": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "_function": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "_key": {
+                      "type": "number"
+                    },
+                    "_abbr": {
+                      "type": "string"
+                    },
+                    "_description": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "_extra": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "_keyOrValue": {
+                      "type": "number"
+                    },
+                    "_abbr": {
+                      "type": "string"
+                    },
+                    "_description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "_destination": {
+              "type": "object",
+              "required": [],
+              "properties": {
+                "_type": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "_key": {
+                      "type": "number"
+                    },
+                    "_abbr": {
+                      "type": "string"
+                    },
+                    "_description": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "_function": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "_key": {
+                      "type": "number"
+                    },
+                    "_abbr": {
+                      "type": "string"
+                    },
+                    "_description": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "_extra": {
+                  "type": "object",
+                  "required": [],
+                  "properties": {
+                    "_keyOrValue": {
+                      "type": "number"
+                    },
+                    "_abbr": {
+                      "type": "string"
+                    },
+                    "_description": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "_variables": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "_name": {
+              "type": "string"
+            },
+            "_value": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
