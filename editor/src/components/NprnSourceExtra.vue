@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineModel, onMounted, ref, nextTick } from 'vue';
+import { defineModel, onMounted, ref } from 'vue';
 import { EMPTY_KEY, genNrpnSourceExtraDnA } from '../modules/dataModel';
 import { SourceExtra } from '../modules/documentModel';
 

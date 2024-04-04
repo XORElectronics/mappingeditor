@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineModel, onMounted, ref, defineEmits } from 'vue';
+import { defineModel, onMounted, ref } from 'vue';
 import { EMPTY_ABBR, EMPTY_DESCRIPTION, EMPTY_KEY, genNrpnSourceExtraDnA, genVarSourceExtraDnA } from '../modules/dataModel';
 import { SourceExtra } from '../modules/documentModel';
 
