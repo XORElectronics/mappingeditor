@@ -51,7 +51,15 @@ Source definitions per Base type:
 		8 [PRB8]Row Probability
 		9 [PTRW]Pattern Row 
 		10 [PRUN]Pattern/Track run status
-		11 [NOTE]Track active note
+		11 [NOT1]Track active note column1
+		12 [NOT2]Track active note column2
+		13 [NOT3]Track active note column3
+		14 [NOT4]Track active note column4
+		15 [NOT5]Track active note column5
+		16 [NOT6]Track active note column6
+		17 [NOT7]Track active note column7
+		18 [NOT8]Track active note column8
+		19 [SROW]Track current Sequencer row
 
 3 [AUTM]<SOURCE_AUTOMATOR_BASE>
 	<SOURCE_AUTOMATOR_FUNCTION>
@@ -169,7 +177,8 @@ Source definitions per Base type:
 			<SOURCE_CALC_EXTRA>
 		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
 		Value definition of an operand:  (first 2 digits is value A and 2nd 2 digits is value B) [=0=3] or [=2VB] or [2CVA] or [VCVA] or [VB=9] or [00] etc...
-		0..9 [=(0-9)]Constant 0 to 9
+		0..8 [=(0-8)]Constant 0 to 8
+		9     TH  [TH] Threshold (Set threshold in Nerd Menu)
 		10-25 VA..VP [V(A-P)]Variables A-P
 		26-95 00..69 [(00-45h)]Rows 0 - 69
 		
@@ -185,7 +194,8 @@ Source definitions per Base type:
 		<SOURCE_SKIP_EXTRA>
 		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
 		Value definition of an operand:  (first 2 digits is value A and 2nd 2 digits is value B) [=0=3] or [=2VB] or [2CVA] or [VCVA] or [VB=9] or [00] etc...
-		0..9 [=(0-9)]Constant 0 to 9
+		0..8 [=(0-8)]Constant 0 to 8
+		9     TH  [TH] Threshold (Set threshold in Nerd Menu)
 		10-25 VA..VP [V(A-P)]Variables A-P
 		26-95 00..69 [(00-45h)]Rows 0 - 69
 		
@@ -201,6 +211,7 @@ Source definitions per Base type:
 	7 [BPM ]Clock Tempo/BPM
 	8 [SEQV]Sequencer Value
 	9 [PULS]Create Pulse from Command
+	10 [TICK]Current Mainclock Ticks
 		<SOURCE_GLOBAL_EXTRA>
 		[----]N/A
 		
@@ -225,12 +236,34 @@ Source definitions per Base type:
 		9 [DOWN]Sega Gamepad:Down
 		10 [LEFT]Sega Gamepad:Left
 		11 [RGHT]Sega Gamepad:Right
+	2 [BUTN]NerdSEQ Buttons
+		<SOURCE_EXTERNAL_FUNCTION>
+		NerdSEQ Buttons pressed:
+		0 [CRUP] Cursor UP
+		1 [CRDN] Cursor DOWN
+		2 [CRLF] Cursor LEFT
+		3 [CRRG] Cursor RIGHT
+		4 [STRT] Button START
+		5 [STOP] Button STOP
+		6 [SHFT] Button SHIFT
+		7 [OK  ] Button OK
+		8 [UP  ] Button UP
+		9 [DOWN] Button DOWN
+		10 [SEQ ] Button SEQ/MARK
+		11 [PTRN] Button PATTERN/COPY
+		12 [PTCH] Button PATCH/DELETE
+		13 [TABL] Button TABLE/Record
+		14 [AUTO] Button AUTOMATE/NERD
+		15 [PROJ] Button PROJECT/SETUP		
 		
 14 [CTRL]<SOURCE_CONTROL_BASE>
 	<SOURCE_CONTROL_FUNCTION>
 	0 [XMAP]Execute X Mapping rows
+	1 [XXMP]Exclusive Execute X Mapping rows
+	2 [XLOD]Execute X mapping rows once on project load
 		<SOURCE_CONTROL_EXTRA>
-		0 - 31 [(0-31)RW]Amount of mapping rows
+		All Source control functions share the same Source Control Extra values:
+		0 - 69 [(0-69)RW]Amount of mapping rows
 		
 
 Destination definitions per Base type:
@@ -263,7 +296,9 @@ Destination definitions per Base type:
 2 [TRCK]<DESTINATION_TRACK_BASE>
 	<DESTINATION_TRACK_FUNCTION>
 	0-7 [TRK(1-8)] Tracks 1-8
-	8 [SLCT] Track Select
+	8 [SLCT] Track Select (track where the cursor is located currently)
+	9-24 [V(AP)  ] Track selected by variable 0..15 (A-P)
+	25-94 [RW(00-45)] Track selected by row result 0-69
 		<DESTINATION_TRACK_EXTRA>
 		0 [MUTE]Mute
 		1 [SOLO]Solo
@@ -301,7 +336,7 @@ Destination definitions per Base type:
 		33 [JMPT]Jump Sequencer Row of Track
 		34 [JMPR]Jump Sequencer Row
 		35 [STOP]Stop / Cue Stop Sequencer Track
-		36 [PH 1]Unused
+		36 [ECLP]Euclidean position for the next Euclidean functions
 		37 [ECLD]Euclidean
 		38..53 [EC(1-16)]Drummatrix Eucliean
 		54 [CRSR]Pattern Cursor Position
@@ -312,6 +347,8 @@ Destination definitions per Base type:
 3 [AUTM]<DESTINATION_AUTOMATOR_BASE>
 	<DESTINATION_AUTOMATOR_FUNCTION>
 	0..7 [SLT(0-7)]Selected Automator Slot
+	8..24 [V(A-P)  ]Automator slot selected by variables 0..15 (A-P)
+	25-94 [RW(00-45)]Automator slot selected by row result 0-69
 		<DESTINATION_AUTOMATOR_EXTRA>
 		Depends on what type the slot is. Currently only LFO integrated
 		LFO:
@@ -329,6 +366,8 @@ Destination definitions per Base type:
 4 [ENV ]<DESTINATION_ENVELOPE_BASE>
 	<DESTINATION_ENVELOPE_FUNCTION>
 	0..7 [#  (1-8)]Envelope 1-8
+	8..24 [V(A-P)  ]Envelope selected by variables 0..15 (A-P)
+	25-94 [RW(00-45)]Envelope selected by row result 0-69
 		<DESTINATION_ENVELOPE_EXTRA>
 		0 [ATK ]Attack
 		1 [ATKP]Attack Peak
@@ -463,6 +502,11 @@ Destination definitions per Base type:
 		<DESTINATION_GLOBAL_EXTRA>  Belongs only to modes
 		0 [EDIT]Edit Mode
 		1 [REC]Record Mode
+		2 [LIVE]CV Input Live Mode
+		3 [SCRL]Pattern Scroll Mode
+		4 [EDTS]Pattern Edit steps
+	12 [SROW]Set current cursor in sequencer row 
+	13 [SDIR]Set current scale direction
 
 		<DESTINATION_GLOBAL_EXTRA> N/A [----]for all other function types
 		
@@ -515,3 +559,212 @@ Destination definitions per Base type:
 		2 [NOTE]Note OnOff
 		3 [PBND]Pitchbend
 		4 [PGMC]Program Change
+
+14 [DUAL]<DESTINATION_DUALCHORD_BASE>
+	<DESTINATION_DUALCHORD_FUNCTION>
+	0..3 [NSA(1-4)]Select the NSA of the dualchord
+		<DESTINATION_DUALCHORD_EXTRA>
+		0..7 [NOT(1-8)]Note for column/wave 1-8
+		8..15[PTC(1-8)]Pitch for column/wave 1-8
+		16-23[OOF(1-8)]Waveform OnOff for column/wave 1-8
+		24-31[L(1-8)SP]LFO 1-8 Speed
+		32-39[L(1-8)AM]LFO 1-8 Amplitude
+		40-47[L(1-8)OF]LFO 1-8 Offset
+		48-55[L(1-8)PH]LFO 1-8 Phase
+		56   [STEO]Stereo Deepness
+		57..65[W(1-8)PW]Waveform 1-8 Pulse Width Modulation
+		66[WAPW]Waveform 1,2,3,4 Pulse Width Modulation
+		67[WBPW]Waveform 5,6,7,8 Pulse Width Modulation
+		68-75[W(1-8)DT]Waveform 1-8 Detune
+		76[WADT]Waveform 1,2,3,4 Detune
+		77[WBDT]Waveform 5,6,7,8 Detune
+		78[ASPR]Output 1 Spread
+		79[BSPR]Output 2 Spread
+		80[W1TR]Waveform 1 Triangle
+		81[W1SI]Waveform 1 Sine
+		82[W1SA]Waveform 1 Sawtooth
+		83[W1PU]Waveform 1 Pulse
+		84[W2TR]Waveform 2 Triangle
+		85[W2SI]Waveform 2 Sine
+		86[W2SA]Waveform 2 Sawtooth
+		87[W2PU]Waveform 2 Pulse
+		88[W3TR]Waveform 3 Triangle
+		89[W3SI]Waveform 3 Sine
+		90[W3SA]Waveform 3 Sawtooth
+		91[W3PU]Waveform 3 Pulse
+		92[W4TR]Waveform 4 Triangle
+		93[W4SI]Waveform 4 Sine
+		94[W4SA]Waveform 4 Sawtooth
+		95[W4PU]Waveform 4 Pulse
+		96[W5TR]Waveform 5 Triangle
+		97[W5SI]Waveform 5 Sine
+		98[W5SA]Waveform 5 Sawtooth
+		99[W5PU]Waveform 5 Pulse
+		100[W6TR]Waveform 6 Triangle
+		101[W6SI]Waveform 6 Sine
+		102[W6SA]Waveform 6 Sawtooth
+		103[W6PU]Waveform 6 Pulse
+		104[W7TR]Waveform 7 Triangle
+		105[W7SI]Waveform 7 Sine
+		106[W7SA]Waveform 7 Sawtooth
+		107[W7PU]Waveform 7 Pulse
+		108[W8TR]Waveform 8 Triangle
+		109[W8SI]Waveform 8 Sine
+		110[W8SA]Waveform 8 Sawtooth
+		111[W8PU]Waveform 8 Pulse
+		112[WATR]Waveform 1,2,3,4 Triangle
+		113[WASI]Waveform 1,2,3,4 Sine
+		114[WASA]Waveform 1,2,3,4 Sawtooth
+		115[WAPU]Waveform 1,2,3,4 Pulse
+		116[WBTR]Waveform 5,6,7,8 Triangle
+		117[WBSI]Waveform 5,6,7,8 Sine
+		118[WBSA]Waveform 5,6,7,8 Sawtooth
+		119[WBPU]Waveform 5,6,7,8 Pulse		
+		120-127[W(1-8)MO]Waveform 1-8 Morph
+		128[WAMO]Waveform 1,2,3,4 Morph
+		129[WBMO]Waveform 5,6,7,8 Morph
+		130-137[W(1-8)GL]Waveform 1-8 Glide
+		138[WAGL]Waveform 1,2,3,4 Glide
+		139[WBGL]Waveform 5,6,7,8 Glide
+		140-147[W(1-8)VL]Waveform 1-8 Velocity
+		148[WAVL]Waveform 1,2,3,4 Velocity
+		149[WBVL]Waveform 5,6,7,8 Velocity
+		150[PSET]Set Preset
+
+15 [SKIP]<DESTINATION_SKIP_BASE>
+	<DESTINATION_SKIP_FUNCTION>
+	First 2 digits is the amount of rows to skip 01-16 and 2nd 2 digits is the condition to skip (Skip X Rows if A > B for example)
+	0 [(01-16) <]<
+	1 [(01-16)<=]<=
+	2 [(01-16) >]>
+	3 [(01-16)>=]>=
+	4 [(01-16) =]=
+	5 [(01-16)<>]<>
+		<DESTINATION_SKIP_EXTRA>
+		16 bit word is split in 2 bytes where the MSB is the first operand and the LSB is the 2nd operand
+		Value definition of an operand:  (first 2 digits is value A and 2nd 2 digits is value B) [=0=3] or [=2VB] or [2CVA] or [VCVA] or [VB=9] or [00] etc...
+		0..8 [=(0-8)]Constant 0 to 8
+		9     TH  [TH] Threshold (Set threshold in Nerd Menu)
+		10-25 VA..VP [V(A-P)]Variables A-P
+		26-95 00..69 [(00-45h)]Rows 0 - 69
+
+
+16 [VISU]<DESTINATION_VISUALS_BASE>
+	<DESTINATION_VISUALS_FUNCTION>
+	0[SHSL]Shader Select
+		<DESTINATION_VISUALS_EXTRA>
+		0[NOSH]Stop shader now
+		1..8[SH (1-8)]Start shader 1-8 now
+		9[SHSL]Start shader (shader selection by value) now
+		10[CNOS]Cue stop shader
+		11..18[CSH(1-8)]Cue shader 1-8
+		19[SHCU]Cue shader (shader selection by value)
+	1[SHAD]Shader functions
+		<DESTINATION_VISUALS_EXTRA>
+		0[POSX]Shader position X
+		1[POSY]Shader position Y
+		2[TAMP]Shader time amplify
+		3[ALPH]Shader alpha
+	2[MODS]Shader Modulators
+		<DESTINATION_VISUALS_EXTRA>
+		0..15[MD(1-16)]Modulators 1-16
+	3[SENV]Shader Envelope Settings
+		<DESTINATION_VISUALS_EXTRA>
+		0[E1GT]Shader Envelope 1 Gate
+		1[E1FI]Shader Envelope 1 Fire
+		2[E1AT]Shader Envelope 1 Attack
+		3[E1SU]Shader Envelope 1 Sustain
+		4[E1RE]Shader Envelope 1 Release
+		5[E1OF]Shader Envelope 1 Offset
+		6[E2GT]Shader Envelope 2 Gate
+		7[E2FI]Shader Envelope 2 Fire
+		8[E2AT]Shader Envelope 2 Attack
+		9[E2SU]Shader Envelope 2 Sustain
+		10[E2RE]Shader Envelope 2 Release
+		11[E2OF]Shader Envelope 2 Offset
+		12[E3GT]Shader Envelope 3 Gate
+		13[E3FI]Shader Envelope 3 Fire
+		14[E3AT]Shader Envelope 3 Attack
+		15[E3SU]Shader Envelope 3 Sustain
+		16[E3RE]Shader Envelope 3 Release
+		17[E3OF]Shader Envelope 3 Offset
+		18[E4GT]Shader Envelope 4 Gate
+		19[E4FI]Shader Envelope 4 Fire
+		20[E4AT]Shader Envelope 4 Attack
+		21[E4SU]Shader Envelope 4 Sustain
+		22[E4RE]Shader Envelope 4 Release
+		23[E4OF]Shader Envelope 4 Offset
+		24[E5GT]Shader Envelope 5 Gate
+		25[E5FI]Shader Envelope 5 Fire
+		26[E5AT]Shader Envelope 5 Attack
+		27[E5SU]Shader Envelope 5 Sustain
+		28[E5RE]Shader Envelope 5 Release
+		29[E5OF]Shader Envelope 5 Offset
+		30[E6GT]Shader Envelope 6 Gate
+		31[E6FI]Shader Envelope 6 Fire
+		32[E6AT]Shader Envelope 6 Attack
+		33[E6SU]Shader Envelope 6 Sustain
+		34[E6RE]Shader Envelope 6 Release
+		35[E6OF]Shader Envelope 6 Offset
+		36[E7GT]Shader Envelope 7 Gate
+		37[E7FI]Shader Envelope 7 Fire
+		38[E7AT]Shader Envelope 7 Attack
+		39[E7SU]Shader Envelope 7 Sustain
+		40[E7RE]Shader Envelope 7 Release
+		41[E7OF]Shader Envelope 7 Offset
+		42[E8GT]Shader Envelope 8 Gate
+		43[E8FI]Shader Envelope 8 Fire
+		44[E8AT]Shader Envelope 8 Attack
+		45[E8SU]Shader Envelope 8 Sustain
+		46[E8RE]Shader Envelope 8 Release
+		47[E8OF]Shader Envelope 8 Offset
+	4[SLFO]Shader LFO Settings
+		<DESTINATION_VISUALS_EXTRA>
+		0[L1ST]Shader LFO 1 Start
+		1[L1WV]Shader LFO 1 Waveform
+		2[L1SP]Shader LFO 1 Speed
+		3[L1AM]Shader LFO 1 Amplitude
+		4[L1OF]Shader LFO 1 Offset
+		5[L1PH]Shader LFO 1 Phase
+		6[L2ST]Shader LFO 2 Start
+		7[L2WV]Shader LFO 2 Waveform
+		8[L2SP]Shader LFO 2 Speed
+		9[L2AM]Shader LFO 2 Amplitude
+		10[L2OF]Shader LFO 2 Offset
+		11[L2PH]Shader LFO 2 Phase
+		12[L3ST]Shader LFO 3 Start
+		13[L3WV]Shader LFO 3 Waveform
+		14[L3SP]Shader LFO 3 Speed
+		15[L3AM]Shader LFO 3 Amplitude
+		16[L3OF]Shader LFO 3 Offset
+		17[L3PH]Shader LFO 3 Phase
+		18[L4ST]Shader LFO 4 Start
+		19[L4WV]Shader LFO 4 Waveform
+		20[L4SP]Shader LFO 4 Speed
+		21[L4AM]Shader LFO 4 Amplitude
+		22[L4OF]Shader LFO 4 Offset
+		23[L4PH]Shader LFO 4 Phase
+		24[L5ST]Shader LFO 5 Start
+		25[L5WV]Shader LFO 5 Waveform
+		26[L5SP]Shader LFO 5 Speed
+		27[L5AM]Shader LFO 5 Amplitude
+		28[L5OF]Shader LFO 5 Offset
+		29[L5PH]Shader LFO 5 Phase			
+		30[L6ST]Shader LFO 6 Start
+		31[L6WV]Shader LFO 6 Waveform
+		32[L6SP]Shader LFO 6 Speed
+		33[L6AM]Shader LFO 6 Amplitude
+		34[L6OF]Shader LFO 6 Offset
+		35[L6PH]Shader LFO 6 Phase
+		36[L7ST]Shader LFO 7 Start
+		37[L7WV]Shader LFO 7 Waveform
+		38[L7SP]Shader LFO 7 Speed
+		39[L7AM]Shader LFO 7 Amplitude
+		40[L7OF]Shader LFO 7 Offset
+		41[L7PH]Shader LFO 7 Phase
+		42[L8ST]Shader LFO 8 Start
+		43[L8WV]Shader LFO 8 Waveform
+		44[L8SP]Shader LFO 8 Speed
+		45[L8AM]Shader LFO 8 Amplitude
+		46[L8OF]Shader LFO 8 Offset
+		47[L8PH]Shader LFO 8 Phase
