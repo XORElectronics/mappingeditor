@@ -1,4 +1,4 @@
-MAPPING FILE DEFINITION (NerdSEQ Mapping save file V2.1):
+MAPPING FILE DEFINITION (NerdSEQ Mapping save file V3.0):
 
 Filename is *.MAP
 
@@ -559,6 +559,8 @@ Destination definitions per Base type:
 		2 [NOTE]Note OnOff
 		3 [PBND]Pitchbend
 		4 [PGMC]Program Change
+		5 [NTGT]Note On/Off by gate from source and note # by the former row
+		6 [NTTR]Note OnOff by a trigger from source and note # by the former row
 
 14 [DUAL]<DESTINATION_DUALCHORD_BASE>
 	<DESTINATION_DUALCHORD_FUNCTION>
@@ -767,4 +769,5 @@ Destination definitions per Base type:
 		44[L8SP]Shader LFO 8 Speed
 		45[L8AM]Shader LFO 8 Amplitude
 		46[L8OF]Shader LFO 8 Offset
+
 		47[L8PH]Shader LFO 8 Phase
