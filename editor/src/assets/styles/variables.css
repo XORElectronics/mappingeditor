@@ -1,0 +1,81 @@
+/**
+ * Global CSS Custom Properties
+ *
+ * Single source of truth for all colors, spacing, sizing, and timing values
+ * used throughout the mapping editor application.
+ */
+
+:root {
+  /* ========== Colors ========== */
+
+  /* Primary Colors */
+  --color-primary: #34cc99;
+  --color-hover: #F1F700;
+  --color-disabled: grey;
+  --color-empty: grey;
+
+  /* Background Colors */
+  --color-dark-bg: #3a3a3f;
+  --color-black: black;
+
+  /* Button Colors */
+  --color-reset: #cc8534;
+  --color-reset-hover: red;
+
+  /* Text Colors */
+  --color-text-primary: black;
+  --color-text-yellow: #F1F700;
+
+  /* Border Colors */
+  --color-border-dark: #dee2e6;
+
+  /* ========== Form Elements ========== */
+
+  /* Heights */
+  --form-height: 30px;
+  --form-min-height: 30px;
+
+  /* Padding */
+  --form-padding-vertical: 0.25rem;
+  --form-padding-horizontal: 0.75rem;
+  --form-padding-top-select: 3px;
+  --form-padding-bottom-select: 9px;
+
+  /* Borders */
+  --form-border-radius: 0;
+  --form-border-radius-left: 5px 0 0 5px;
+  --form-border-radius-right: 0 5px 5px 0;
+
+  /* Font Sizes */
+  --form-font-size: 12px;
+  --form-line-height: 18px;
+
+  /* ========== Buttons ========== */
+
+  /* Padding */
+  --button-padding: 0 6px;
+  --button-font-size: 10px;
+
+  /* ========== Layout ========== */
+
+  /* Grid */
+  --grid-gap: 2px;
+
+  /* Extra Components */
+  --extras-checkbox-size: 1.2em;
+  --extras-label-padding-left: 1em;
+  --extras-checkbox-padding-right: 1.5em;
+
+  /* ========== Effects ========== */
+
+  /* Transitions */
+  --transition-standard: 0.2s ease;
+  --transition-fast: 0.1s ease;
+
+  /* Shadows */
+  --shadow-hover: 0 0 8px rgba(0, 0, 0, 0.15);
+
+  /* Opacity */
+  --opacity-disabled: 0.3;
+  --opacity-full: 1;
+}

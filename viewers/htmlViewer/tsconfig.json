@@ -3,7 +3,6 @@
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "module": "ESNext",
-        "moduleResolution": "node",
         "target": "ES5",
         "lib": [
             "ES2017",

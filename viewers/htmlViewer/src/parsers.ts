@@ -9,7 +9,7 @@ export class MappingDocumentParser {
     const document = new docModel.MappingDocument();
     const headerData = buffer.slice(0, MappingDocumentParser.HEADER_LENGTH);
     document.header = HeaderParser.parse(headerData);
-    const rowsData = buffer.slice(MappingDocumentParser.HEADER_LENGTH);
+    const rowsData = buffer.slice(MappingDocumentParser.HEADER_LENGTH, MappingDocumentParser.VARIABLES_OFFSET);
     document.rows = RowsParser.parse(rowsData);
     const variablesData = buffer.slice(MappingDocumentParser.VARIABLES_OFFSET);
     document.variables = VariablesParser.parse(new Uint16Array(variablesData.buffer));
@@ -62,9 +62,13 @@ class RowParser {
     const row = new docModel.Row();
 
     row.index = rowIndex;
+    // According to mapping_file_definition.txt, each row has:
+    // <SOURCE_BASE><SOURCE_FUNCTION><SOURCE_EXTRA><DESTINATION_BASE><DESTINATION_FUNCTION><DESTINATION_EXTRA><UNUSED><UNUSED><UNUSED><UNUSED>
+    // So we extract: sourceType (word 0), sourceFunction (word 1), sourceExtra (word 2)
     const sourceBuffer = buffer.slice(0, 3);
     row.source = SourceParser.parse(sourceBuffer);
-    const destinationBuffer = buffer.slice(3, 7);
+    // And: destType (word 3), destFunction (word 4), destExtra (word 5)
+    const destinationBuffer = buffer.slice(3, 6);
     row.destination = DestinationParser.parse(destinationBuffer);
 
     return row;

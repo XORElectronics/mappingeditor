@@ -1,3 +1,10 @@
+/* Import global CSS variables and shared form element styles */
+@import './variables.css';
+@import './form-elements.css';
+@import './scrollbars.css';
+@import './subsection-toggles.css';
+@import './filter-buttons.css';
+
 @font-face {
   font-family: 'SharedTechMono';
   src: url(/src/assets/fonts/ShareTechMono-Regular.woff) format('woff');

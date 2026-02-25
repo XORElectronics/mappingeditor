@@ -1,0 +1,17 @@
+/* Shared scrollbar styling for all panels */
+.panel-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-scrollable::-webkit-scrollbar-track {
+  background: rgba(52, 204, 153, 0.1);  /* Lighter track */
+}
+
+.panel-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(52, 204, 153, 0.4);   /* More visible thumb */
+  border-radius: 3px;
+}
+
+.panel-scrollable::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 204, 153, 0.6);   /* Brighter on hover */
+}

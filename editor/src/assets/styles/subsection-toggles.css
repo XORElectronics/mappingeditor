@@ -1,0 +1,16 @@
+/* Shared styling for subsection collapse/expand arrows */
+.subsection-toggle-icon {
+  font-size: 10px;
+  color: #34cc99;
+  transition: transform 0.2s ease, color 0.2s;
+  display: inline-block;
+}
+
+.subsection-toggle-icon.expanded {
+  transform: rotate(90deg);
+}
+
+/* Hover state - parent should add hover effect */
+.subsection-divider:hover .subsection-toggle-icon {
+  color: #F1F700;
+}

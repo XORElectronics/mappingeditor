@@ -6,14 +6,38 @@ export class MappingDocumentParser {
   private static readonly VARIABLES_OFFSET = 1470;
 
   public static parse(buffer: Uint8Array): docModel.MappingDocument {
-    const document = new docModel.MappingDocument();
-    const headerData = buffer.slice(0, MappingDocumentParser.HEADER_LENGTH);
-    document.header = HeaderParser.parse(headerData);
-    const rowsData = buffer.slice(MappingDocumentParser.HEADER_LENGTH);
-    document.rows = RowsParser.parse(rowsData);
-    const variablesData = buffer.slice(MappingDocumentParser.VARIABLES_OFFSET);
-    document.variables = VariablesParser.parse(new Uint16Array(variablesData.buffer));
-    return document;
+    try {
+      console.log(`Parsing binary file: ${buffer.length} bytes`);
+      
+      if (buffer.length < MappingDocumentParser.HEADER_LENGTH) {
+        throw new Error(`File too short: ${buffer.length} bytes, expected at least ${MappingDocumentParser.HEADER_LENGTH} bytes for header`);
+      }
+      
+      const document = new docModel.MappingDocument();
+      
+      // Parse header
+      const headerData = buffer.slice(0, MappingDocumentParser.HEADER_LENGTH);
+      console.log(`Parsing header: ${headerData.length} bytes`);
+      document.header = HeaderParser.parse(headerData);
+      
+      // Parse rows
+      const rowsData = buffer.slice(MappingDocumentParser.HEADER_LENGTH, MappingDocumentParser.VARIABLES_OFFSET);
+      document.rows = RowsParser.parse(rowsData);
+      
+      // Parse variables
+      if (buffer.length < MappingDocumentParser.VARIABLES_OFFSET + 32) {
+        throw new Error(`File too short for variables: ${buffer.length} bytes, expected at least ${MappingDocumentParser.VARIABLES_OFFSET + 32} bytes`);
+      }
+      
+      const variablesData = buffer.slice(MappingDocumentParser.VARIABLES_OFFSET);
+      document.variables = VariablesParser.parse(new Uint16Array(variablesData.buffer, variablesData.byteOffset, variablesData.byteLength / 2));
+      
+
+      return document;
+    } catch (error) {
+      console.error('Binary parsing error:', error);
+      throw new Error(`Binary file parsing failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 }
 
@@ -33,7 +57,8 @@ class HeaderParser {
     header.minorVersion = buffer[HeaderParser.MINOR_VERSION_OFFSET];
     header.fileName = textDecoder.decode(buffer.slice(HeaderParser.FILE_NAME_OFFSET, HeaderParser.FILE_NAME_OFFSET + HeaderParser.FILE_NAME_LENGTH)).replace(/[\0\s]+$/, ''); // remove trailing nulls and spaces
     header.variant = ''; // variant is not encoded in the file yet
-    // ignore next 40 bytes (reserved)
+    // Preserve the 40 reserved bytes (30-69)
+    header.reserved = buffer.slice(30, 70);
 
     return header;
   }
@@ -62,10 +87,46 @@ class RowParser {
     const row = new docModel.Row();
 
     row.index = rowIndex;
+    
+    // Check if this is an empty row (all 0xFFFF values)
+    const isEmpty = buffer.every(value => value === 0xFFFF);
+    if (isEmpty) {
+      // Create empty source and destination with default values
+      row.source = new docModel.Source();
+      row.source.type = new docModel.SourceType(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+      row.source.function = new docModel.SourceFunction(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+      row.source.extra = new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+      
+      row.destination = new docModel.Destination();
+      row.destination.type = new docModel.DestinationType(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+      row.destination.function = new docModel.DestinationFunction(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+      row.destination.extra = new docModel.DestinationExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+      
+      // Set default values for empty rows
+      row.channel = 1;
+      row.minValue = -2048;
+      row.maxValue = 2047;
+      row.offset = 0;
+      
+      return row;
+    }
+    
     const sourceBuffer = buffer.slice(0, 3);
     row.source = SourceParser.parse(sourceBuffer);
-    const destinationBuffer = buffer.slice(3, 7);
+    const destinationBuffer = buffer.slice(3, 6);
     row.destination = DestinationParser.parse(destinationBuffer);
+    
+    // Preserve the unused fields from the binary format
+    row.unused1 = buffer[6];
+    row.unused2 = buffer[7];
+    row.unused3 = buffer[8];
+    row.unused4 = buffer[9];
+    
+    // Set default values for UI fields (these are not stored in the binary format)
+    row.channel = 1;
+    row.minValue = -2048;
+    row.maxValue = 2047;
+    row.offset = 0;
 
     return row;
   }
@@ -114,6 +175,8 @@ export class SourceExtraParser {
       throw new Error(`sourceTypeLookup is null or undefined`);
     }
 
+
+
     if (key === dataModel.EMPTY_KEY) {
       return new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
     }
@@ -159,9 +222,18 @@ export class SourceExtraParser {
               }
             case dataModel.SEGA_GAMEPAD_EXTERNAL_SOURCE_FUNCTION_KEY:
               {
-                const sourceEx = dataModel.keyboardSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
+                const sourceEx = dataModel.segaGamepadSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
                 if (!sourceEx) {
                   throw new Error(`Unknown Sega GamePad Source Function Extra ${key}`);
+                }
+                sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
+                break;
+              }
+            case dataModel.NERDSEQ_BUTTONS_EXTERNAL_SOURCE_FUNCTION_KEY:
+              {
+                const sourceEx = dataModel.nerdseqButtonsSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
+                if (!sourceEx) {
+                  throw new Error(`Unknown NerdSEQ Buttons Source Function Extra ${key}`);
                 }
                 sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                 break;
@@ -171,6 +243,7 @@ export class SourceExtraParser {
                 throw new Error(`Unknown External Source Function ${sourceFunctionKey}`);
               }
           }
+          break;
         }
       default:
         {
@@ -271,12 +344,74 @@ class DestinationExtraParser {
                 throw new Error(`Unknown External Destination Function ${destinationFunctionKey}`);
               }
           }
+          break;
         }
       case dataModel.MIDI_CC_DESTINATION_TYPE_KEY:
         {
           const { abbr, description } = dataModel.genMidiCcDestinationDnA(key);
           destinationExtra = new docModel.DestinationExtra(key, abbr, description);
           break
+        }
+      case dataModel.VISU_DESTINATION_TYPE_KEY:
+        {
+          switch (destinationFunctionKey) {
+            case dataModel.VISU_SHADER_SELECT_FUNCTION_KEY:
+              {
+                const destExtra = dataModel.visuShaderSelectExtras.find((e) => e.key === key) as dataModel.MappingTuple;
+                if (!destExtra) {
+                  throw new Error(`Unknown VISU Shader Select Destination Function Extra ${key}`);
+                }
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
+                break;
+              }
+            case dataModel.VISU_SHADER_FUNCTIONS_FUNCTION_KEY:
+              {
+                const destExtra = dataModel.visuShaderFunctionsExtras.find((e) => e.key === key) as dataModel.MappingTuple;
+                if (!destExtra) {
+                  throw new Error(`Unknown VISU Shader Functions Destination Function Extra ${key}`);
+                }
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
+                break;
+              }
+            case dataModel.VISU_MODULATORS_FUNCTION_KEY:
+              {
+                const destExtra = dataModel.visuModulatorsExtras.find((e) => e.key === key) as dataModel.MappingTuple;
+                if (!destExtra) {
+                  throw new Error(`Unknown VISU Modulators Destination Function Extra ${key}`);
+                }
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
+                break;
+              }
+            case dataModel.VISU_ENVELOPES_FUNCTION_KEY:
+              {
+                const destExtra = dataModel.visuEnvelopesExtras.find((e) => e.key === key) as dataModel.MappingTuple;
+                if (!destExtra) {
+                  throw new Error(`Unknown VISU Envelopes Destination Function Extra ${key}`);
+                }
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
+                break;
+              }
+            case dataModel.VISU_LFOS_FUNCTION_KEY:
+              {
+                const destExtra = dataModel.visuLfosExtras.find((e) => e.key === key) as dataModel.MappingTuple;
+                if (!destExtra) {
+                  throw new Error(`Unknown VISU LFOs Destination Function Extra ${key}`);
+                }
+                destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
+                break;
+              }
+            default:
+              {
+                throw new Error(`Unknown VISU Destination Function ${destinationFunctionKey}`);
+              }
+          }
+          break;
+        }
+      case dataModel.SKIP_DESTINATION_TYPE_KEY:
+        {
+          const { abbr, description } = dataModel.genCalcSkipSourceExtraDnA(key);
+          destinationExtra = new docModel.DestinationExtra(key, abbr, description);
+          break;
         }
       default:
         {

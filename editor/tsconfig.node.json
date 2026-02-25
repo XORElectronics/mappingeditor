@@ -11,8 +11,9 @@
     "lib": ["ESNext"],
     "composite": true,
     "noEmit": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "types": ["node"],
+    "ignoreDeprecations": "5.0"
   }
 }

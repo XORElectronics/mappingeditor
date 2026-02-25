@@ -1,12 +1,32 @@
 <script setup lang="ts">
-import { defineModel, ref, watch, onMounted } from 'vue';
+import { defineModel, ref, watch, onMounted, computed } from 'vue';
 import { genCalcSkipSourceByteExtras, genCalcSkipSourceExtraDnA, EMPTY_KEY_SHORT} from '../modules/dataModel';
 import { SourceExtra } from '../modules/documentModel';
+
+const props = defineProps<{
+  displayRowIndexAsHex: boolean
+  isLocked?: boolean
+}>();
 
 const model = defineModel<SourceExtra>({ required: true });
 const extraVal1 = ref<number>(EMPTY_KEY_SHORT);
 const extraVal2 = ref<number>(EMPTY_KEY_SHORT);
-const extras = genCalcSkipSourceByteExtras();
+const baseExtras = genCalcSkipSourceByteExtras();
+
+// Format row options based on hex/decimal preference
+const extras = computed(() => {
+  return baseExtras.map(ex => {
+    // Row options are keys 26-95 (rows 0-69)
+    if (ex.key >= 26 && ex.key <= 95) {
+      const rowIndex = ex.key - 26;
+      if (props.displayRowIndexAsHex) {
+        const hexIndex = rowIndex.toString(16).toUpperCase().padStart(2, '0');
+        return { ...ex, abbr: hexIndex, description: `Row ${hexIndex}` };
+      }
+    }
+    return ex;
+  });
+});
 
 // watch for changes to the model or the params and update the other if needed
 watch([model, extraVal1, extraVal2], ([newModel, newParam1, newParam2], [oldModel, oldParam1, oldParam2]) => {
@@ -34,11 +54,11 @@ onMounted(() => {
 
 defineEmits(['update:modelValue']);
 
-function updateParams() { 
+function updateParams() {
     const newParam1 = (model.value.keyOrValue >> 8) & 0xFF;
-    if (newParam1) { extraVal1.value = newParam1 };
+    extraVal1.value = newParam1;  // Always update, 0 is a valid constant
     const newParam2 = model.value.keyOrValue & 0xFF;
-    if (newParam2) { extraVal2.value = newParam2 };
+    extraVal2.value = newParam2;  // Always update, 0 is a valid constant
 }
 
 function updateModel() {
@@ -49,41 +69,31 @@ function updateModel() {
 </script>
 
 <template>
-    <div class="extras-container">
+    <div class="extras-container" :class="{ 'container-locked': isLocked }">
         <select v-model="extraVal1" class="extra-select es1 form-select border-dark pt-1" :title="extras?.[extraVal1 + 1]?.abbr"
-            :class="{ 'select-empty': extraVal1 === EMPTY_KEY_SHORT }">
+            :class="{ 'select-empty': extraVal1 === EMPTY_KEY_SHORT, 'select-locked': isLocked }"
+            :disabled="isLocked">
             <option v-for="ex in extras" :key="ex.key" :value="ex.key" :title="ex.abbr">{{ ex.description }}</option>
         </select>
         <select v-model="extraVal2" class="extra-select es2 form-select border-dark pt-1" :title="extras?.[extraVal2 + 1]?.abbr"
-            :class="{ 'select-empty': extraVal2 === EMPTY_KEY_SHORT }">
+            :class="{ 'select-empty': extraVal2 === EMPTY_KEY_SHORT, 'select-locked': isLocked }"
+            :disabled="isLocked">
             <option v-for="ex in extras" :key="ex.key" :value="ex.key" :title="ex.abbr">{{ ex.description }}</option>
         </select>
     </div>
 </template>
 
-<style scoped> .extras-container {
-     display: flex;
-     flex-direction: row;
-     justify-content: space-between;
-     align-items: center;
-     width: 100%;
- }
+<style scoped>
+/* Note: .extras-container and .select-empty are in global form-elements.css */
 
- .select-empty {
-     background-color: grey !important;
- }
+.extras-container {
+  gap: var(--grid-gap);
+}
 
- .extra-select {
-     width: 15em;
-     background-color: #34cc99;
- }
-
- .es1 {
-     margin-right: 2px;
- }
-
- .es2 {
-     margin-left: 2px;
- }
+.extra-select {
+  width: calc(50% - 1px);
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
 </style>
 

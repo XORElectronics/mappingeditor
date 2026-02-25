@@ -1,0 +1,88 @@
+/* Shared filter and control styles for all monitors */
+
+/* Filter bar (used in LogMonitor, MidiMonitor) */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(52, 204, 153, 0.1);
+  border-bottom: 1px solid #34cc99;
+  flex-shrink: 0;
+}
+
+/* Control group (used in VariableMonitor and other controls) */
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Group of related buttons (2px spacing between buttons) */
+.filter-group,
+.toggle-group {
+  display: flex;
+  gap: 2px;
+}
+
+.filter-btn {
+  min-width: 20px;
+  min-height: 20px;
+  padding: 2px 5px;
+  background: rgba(52, 204, 153, 0.05);
+  border: 1px solid rgba(52, 204, 153, 0.2);
+  color: rgba(52, 204, 153, 0.6);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all 0.15s ease;
+}
+
+.filter-btn:hover {
+  background: rgba(52, 204, 153, 0.1);
+}
+
+.filter-btn.active {
+  background: rgba(52, 204, 153, 0.15);
+  border-color: rgba(52, 204, 153, 0.5);
+  color: #34cc99;
+}
+
+.filter-btn.source-btn {
+  font-size: 10px;
+  font-weight: bold;
+  color: #34cc99;
+}
+
+.type-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.clear-btn {
+  margin-left: auto;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: bold;
+  border: 1px solid #34cc99;
+  background: #000;
+  color: #34cc99;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.clear-btn:hover:not(:disabled) {
+  background: #cc8534;
+  color: #000;
+  border-color: #cc8534;
+}
+
+.clear-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

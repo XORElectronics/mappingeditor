@@ -1,0 +1,265 @@
+/**
+ * Shared Form Element Styles
+ *
+ * Common styles for select elements, input fields, and component containers
+ * used across EditorApp and Extra components.
+ */
+
+/* ========== Base Form Elements ========== */
+
+/**
+ * Shared select element styling
+ * Use this class on all select elements throughout the application
+ */
+.mapping-select {
+  background-color: var(--color-primary);
+  height: var(--form-height);
+  color: var(--color-text-primary);
+  border: none;
+  border-radius: var(--form-border-radius);
+  transition: background-color var(--transition-standard);
+}
+
+.mapping-select:hover:not(:disabled) {
+  background-color: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.mapping-select:disabled {
+  background-color: var(--color-disabled);
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+
+/**
+ * Shared input element styling
+ * Use this class on all input fields throughout the application
+ */
+.mapping-input {
+  background-color: var(--color-primary);
+  height: var(--form-height);
+  padding: var(--form-padding-vertical) var(--form-padding-horizontal);
+  border: none;
+  color: var(--color-text-primary);
+  border-radius: var(--form-border-radius);
+  transition: background-color var(--transition-standard);
+  display: flex;
+  align-items: center;
+}
+
+.mapping-input:hover:not(:disabled) {
+  background-color: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.mapping-input:disabled {
+  background-color: var(--color-disabled);
+  opacity: var(--opacity-full);
+  cursor: not-allowed;
+  color: transparent;
+}
+
+/* ========== State Classes ========== */
+
+/**
+ * Empty state for select and input elements
+ * Applied when no value is selected (EMPTY_KEY)
+ */
+.select-empty {
+  background-color: var(--color-empty) !important;
+  color: var(--color-text-primary);
+}
+
+.input-empty {
+  background-color: var(--color-empty) !important;
+  color: var(--color-text-primary);
+}
+
+/**
+ * Disabled state for containers
+ * Applied to container divs when content is disabled
+ */
+.input-disabled {
+  background-color: var(--color-disabled) !important;
+}
+
+/**
+ * Locked state for select and input elements
+ * Applied when the current slot (A/B) is locked
+ */
+.select-locked,
+.select-locked:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: var(--color-disabled) !important;
+}
+
+.input-locked,
+.input-locked:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: var(--color-disabled) !important;
+}
+
+/* Locked state for checkboxes */
+input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Locked state for buttons */
+.btn-locked,
+.btn-locked:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Locked state for containers and sections */
+.container-locked {
+  opacity: 0.5 !important;
+}
+
+.section-locked {
+  opacity: 0.5 !important;
+  background-color: var(--color-disabled) !important;
+}
+
+.label-locked {
+  opacity: 0.5 !important;
+}
+
+/* ========== Extra Component Containers ========== */
+
+/**
+ * Standard container for Extra components
+ * (CalcSkipSourceExtra, VariableSourceExtra, MidiCcDestinationExtra)
+ */
+.extras-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/**
+ * First section of Extra components
+ * Typically contains labels and checkboxes
+ */
+.extras-first {
+  display: flex;
+  flex-direction: row;
+  justify-content: left;
+  align-items: center;
+  height: 100%;
+  background-color: var(--color-primary);
+}
+
+.extras-first.disabled {
+  background-color: var(--color-disabled) !important;
+}
+
+.extras-first > label {
+  padding-left: var(--extras-label-padding-left);
+  height: 100%;
+  color: var(--color-text-primary);
+}
+
+.extras-first > div {
+  display: flex;
+  width: var(--extras-checkbox-size);
+  height: var(--extras-checkbox-size);
+  padding-right: var(--extras-checkbox-padding-right);
+}
+
+/**
+ * Second section of Extra components
+ * Typically contains input fields or select elements
+ */
+.extras-second {
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+  align-items: center;
+  height: 100%;
+  background-color: var(--color-primary);
+}
+
+.extras-second.disabled {
+  background-color: var(--color-disabled) !important;
+}
+
+.extras-second > input {
+  background-color: var(--color-primary);
+  border: none;
+  height: 100%;
+  width: 100%;
+  padding: var(--form-padding-vertical) var(--form-padding-horizontal);
+  display: flex;
+  align-items: center;
+}
+
+.extras-second > input:disabled {
+  background-color: var(--color-disabled);
+  opacity: var(--opacity-full);
+  color: transparent;
+}
+
+.extras-second > select {
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+  border: none;
+  height: 100%;
+}
+
+/* ========== Buttons ========== */
+
+/**
+ * Standard mapping button styling
+ * Used for copy, paste, clear buttons
+ */
+.mapping-btn {
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+  border: none;
+  font-size: var(--button-font-size);
+  padding: var(--button-padding);
+  transition: background-color var(--transition-standard),
+              box-shadow var(--transition-standard),
+              opacity var(--transition-standard);
+}
+
+.mapping-btn:hover:not(:disabled) {
+  background-color: var(--color-hover);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-hover);
+}
+
+.mapping-btn:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+  background-color: var(--color-disabled);
+}
+
+.mapping-btn:disabled:hover {
+  box-shadow: none;
+  background-color: var(--color-disabled) !important;
+}
+
+/* ========== Labels ========== */
+
+/**
+ * Empty label state
+ * Applied to labels when showing placeholder text
+ */
+.label-empty {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-disabled) !important;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text-primary) !important;
+  padding-left: 1.5em;
+  padding-bottom: 0.25em;
+}

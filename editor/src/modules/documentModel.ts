@@ -14,6 +14,9 @@ export class MappingDocument {
     public get variables(): Variable[] { return this._variables; }
     public set variables(value: Variable[]) { this._variables = value; }
 
+    // Global documentation field (JSON-only, not in binary .MAP format)
+    public globalComment?: string;
+
     // TODO: Ensure that the length of rows is equal to ROW_COUNT on construction and in the setter.    8
 
     private _header: Header;
@@ -46,7 +49,7 @@ export class MappingDocument {
 export class Header {
     public static readonly RESERVED_BYTES = 40;
     public static readonly DEFAULT_HEADER_TEXT = "NerdSEQ Mapping";
-    public static readonly DEFAULT_MAJOR_VERSION = 2;
+    public static readonly DEFAULT_MAJOR_VERSION = 3;
     public static readonly DEFAULT_MINOR_VERSION = 0;
     public static readonly DEFAULT_VARIANT = "";
     public static readonly DEFAULT_FILENAME = "DEFAULT";
@@ -61,6 +64,8 @@ export class Header {
     public set variant(value: string) { this._variant = value; }
     public get fileName(): string { return this._filename; }
     public set fileName(value: string) { this._filename = value; }
+    public get reserved(): Uint8Array { return this._reserved; }
+    public set reserved(value: Uint8Array) { this._reserved = value; }
 
     // TODO: Ensure that none of the the above properties exceed their maximum length or values on construction
     // and in the setters.
@@ -92,6 +97,22 @@ export class Row {
     public set source(value: Source) { this._source = value; }
     public get destination(): Destination { return this._destination; }
     public set destination(value: Destination) { this._destination = value; }
+    public get channel(): number { return this._channel; }
+    public set channel(value: number) { this._channel = value; }
+    public get minValue(): number { return this._minValue; }
+    public set minValue(value: number) { this._minValue = value; }
+    public get maxValue(): number { return this._maxValue; }
+    public set maxValue(value: number) { this._maxValue = value; }
+    public get offset(): number { return this._offset; }
+    public set offset(value: number) { this._offset = value; }
+    public get unused1(): number { return this._unused1; }
+    public set unused1(value: number) { this._unused1 = value; }
+    public get unused2(): number { return this._unused2; }
+    public set unused2(value: number) { this._unused2 = value; }
+    public get unused3(): number { return this._unused3; }
+    public set unused3(value: number) { this._unused3 = value; }
+    public get unused4(): number { return this._unused4; }
+    public set unused4(value: number) { this._unused4 = value; }
 
     // TODO: Ensure that the index does not exceed it MappingDocument.ROW_COUNT on construction and in the setter.
     // Will use index rather than array index to order rows on export of the doc
@@ -99,11 +120,27 @@ export class Row {
     private _index: number;
     private _source: Source;
     private _destination: Destination;
+    private _channel: number;
+    private _minValue: number;
+    private _maxValue: number;
+    private _offset: number;
+    private _unused1: number;
+    private _unused2: number;
+    private _unused3: number;
+    private _unused4: number;
 
-    constructor(index?: number, source?: Source, destination?: Destination) {
+    constructor(index?: number, source?: Source, destination?: Destination, channel?: number, minValue?: number, maxValue?: number, offset?: number) {
         this._index = index ?? Row.DEFAULT_INDEX;
         this._source = source ?? new Source();
         this._destination = destination ?? new Destination();
+        this._channel = channel ?? 1;
+        this._minValue = minValue ?? -2048;
+        this._maxValue = maxValue ?? 2047;
+        this._offset = offset ?? 0;
+        this._unused1 = 65535;
+        this._unused2 = 65535;
+        this._unused3 = 65535;
+        this._unused4 = 65535;
     }
 }
 

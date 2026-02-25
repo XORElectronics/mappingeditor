@@ -57,17 +57,57 @@ export function toMarkdown(document: MappingDocument, useAbbrivations: boolean =
     return output;
 }
 
-export function toJson(document: MappingDocument): string {
-    return JSON.stringify(document);
+// Metadata interface for editor-specific data
+export interface EditorMetadata {
+    rowColors?: Record<number, string>;
+    rowComments?: Record<number, string>;
+    globalComment?: string;
+}
+
+export function toJson(document: MappingDocument, metadata?: EditorMetadata): string {
+    const jsonData: Record<string, unknown> = {
+        header: document.header.headerText,
+        versionMajor: document.header.majorVersion,
+        versionMinor: document.header.minorVersion,
+        filename: document.header.fileName,
+        placeholderBytes: document.header.reserved ? Array.from(document.header.reserved) : new Array(40).fill(255),
+        mappings: document.rows.map(row => ({
+            sourceType: row.source.type.key,
+            sourceFunction: row.source.function.key,
+            sourceFunctionExtra: row.source.extra.keyOrValue,
+            destinationType: row.destination.type.key,
+            destinationFunction: row.destination.function.key,
+            destinationFunctionExtra: row.destination.extra.keyOrValue,
+            unused1: row.unused1,
+            unused2: row.unused2,
+            unused3: row.unused3,
+            unused4: row.unused4
+        })),
+        variables: document.variables.map(variable => variable.value)
+    };
+
+    // Add editor metadata if provided (rowColors, rowComments, etc.)
+    // Also include global documentation field from the document
+    const hasMetadata = metadata && (
+        Object.keys(metadata.rowColors || {}).length > 0 ||
+        Object.keys(metadata.rowComments || {}).length > 0
+    );
+    const hasGlobalComment = document.globalComment;
+
+    if (hasMetadata || hasGlobalComment) {
+        jsonData.editorMetadata = {
+            ...(metadata || {}),
+            globalComment: document.globalComment
+        };
+    }
+
+    return JSON.stringify(jsonData, null, 2);
 }
 
 function numToUint8Array(value: number): Uint8Array {
-    let uint16Array = new Uint16Array([value]);
-    let uint8Array = new Uint8Array(uint16Array.length * 2);
+    let uint8Array = new Uint8Array(2);
     let dataView = new DataView(uint8Array.buffer);
-    for (let i = 0; i < uint16Array.length; i++) {
-        dataView.setUint16(i * 2, uint16Array[i], true);
-    }
+    dataView.setUint16(0, value, true); // little-endian
     return uint8Array;
 }
 
@@ -88,7 +128,12 @@ export function toBlob(document: MappingDocument): Blob {
     parts.push(new Uint8Array([document.header.minorVersion]));
     const encodedFileName = encoder.encode(document.header.fileName.padEnd(FILE_NAME_LENGTH, '\0')).slice(0, FILE_NAME_LENGTH);
     parts.push(encodedFileName);
-    parts.push(new Uint8Array(HEADER_RESERVED_LENGTH).fill(UNUSED_FILLER));
+    // Use preserved reserved bytes or fill with default if none available
+    if (document.header.reserved && document.header.reserved.length === HEADER_RESERVED_LENGTH) {
+        parts.push(document.header.reserved);
+    } else {
+        parts.push(new Uint8Array(HEADER_RESERVED_LENGTH).fill(UNUSED_FILLER));
+    }
 
     // Serialize rows
     document.rows.forEach(row => {
@@ -98,7 +143,11 @@ export function toBlob(document: MappingDocument): Blob {
         parts.push(numToUint8Array(row.destination.type.key));
         parts.push(numToUint8Array(row.destination.function.key));
         parts.push(numToUint8Array(row.destination.extra.keyOrValue));
-        parts.push(new Uint8Array(ROW_UNUSED_LENGTH).fill(UNUSED_FILLER));
+        // Use preserved unused fields or fill with default if none available
+        parts.push(numToUint8Array(row.unused1));
+        parts.push(numToUint8Array(row.unused2));
+        parts.push(numToUint8Array(row.unused3));
+        parts.push(numToUint8Array(row.unused4));
     });
 
     // Serialize variables
