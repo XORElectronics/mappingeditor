@@ -29,7 +29,7 @@ import SelectionToolbar from './SelectionToolbar.vue';
 import SettingsPanel from './SettingsPanel.vue';
 import LogMonitor from './LogMonitor.vue';
 import GlobalDocumentationPanel from './GlobalDocumentationPanel.vue';
-import MenuButton from './MenuButton.vue';
+import OpenFileModal from './OpenFileModal.vue';
 import IconButton from './IconButton.vue';
 import ToastNotifications from './ToastNotifications.vue';
 import { useMidi } from '../composables/useMidi';
@@ -58,6 +58,7 @@ const mappingDocument = ref<MappingDocument>(new MappingDocument());
 // Vue's UnwrapRef<T> strips private class fields; this accessor restores the correct MappingDocument type for commands
 const doc = (): MappingDocument => mappingDocument.value as unknown as MappingDocument;
 const fileInput = ref<HTMLInputElement | null>(null);
+const showOpenFileModal = ref(false);
 
 // Skip analysis composable
 const { isRowSkipped } = useSkipAnalysis(mappingDocument);
@@ -71,6 +72,7 @@ const rowComments = ref<Record<number, string>>({});
 // Row selection composable
 const {
   selectedRowIndices,
+  lastClickedRowIndex,
   expandedCommentRowIndex,
   sortedSelectedIndices,
   canMoveUp,
@@ -222,6 +224,7 @@ const {
   moveRowsUp,
   moveRowsDown,
   copySource,
+  pastePresetBlock,
   pasteSource,
   clearSource,
   copyDestination,
@@ -1003,10 +1006,18 @@ function downloadMap() {
     v-model:show-description="showDescription"
     v-model:midi-learn-auto-advance="midiLearnAutoAdvance"
     v-model:paste-auto-advance="pasteAutoAdvance"
+    :is-locked="isCurrentLocked"
     :header-text="mappingDocument.header.headerText"
     :firmware-major="mappingDocument.header.majorVersion"
     :firmware-minor="mappingDocument.header.minorVersion"
     @expanded-change="settingsPanelExpanded = $event"
+    @open-file="showOpenFileModal = true"
+    @reset="reset"
+    @download-html="downloadHtml"
+    @download-markdown="downloadMarkdown(false)"
+    @download-markdown-ns="downloadMarkdown(true)"
+    @download-json="downloadJson"
+    @download-map="downloadMap"
   />
 
   <!-- Selection Toolbar (docked to left of Settings) -->
@@ -1018,6 +1029,11 @@ function downloadMap() {
     :can-move-up="canMoveUp"
     :can-move-down="canMoveDown"
     :is-locked="isCurrentLocked"
+    :active-slot="activeSlot"
+    :is-locked-a="isLockedA"
+    :is-locked-b="isLockedB"
+    :has-data-a="hasDataA"
+    :has-data-b="hasDataB"
     @expanded-change="selectionToolbarExpanded = $event"
     @cut="handleMultiCut"
     @copy="handleMultiCopy"
@@ -1027,6 +1043,7 @@ function downloadMap() {
     @clear="handleMultiClear"
     @set-color="setRowColor"
     @cancel="clearRowSelection"
+    @switch-slot="handleSlotSwitch"
   />
 
   <!-- MIDI Monitor (docked to left of Selection Toolbar) -->
@@ -1042,8 +1059,11 @@ function downloadMap() {
     :variable-usage="variableUsage"
     :display-row-index-as-hex="displayRowIndexAsHex"
     :rows="mappingDocument.rows"
+    :warning-count="warningCount"
+    :error-count="errorCount"
     @expanded-change="variableMonitorExpanded = $event"
     @scroll-to-row="handleScrollToRow"
+    @analyze="runAnalysis"
   />
 
   <!-- Log Monitor (docked to left of Variable Monitor) -->
@@ -1064,67 +1084,23 @@ function downloadMap() {
     @unnotice-warning="handleUnnoticeWarning"
   />
 
+  <!-- Unified Open File Modal -->
+  <OpenFileModal
+    v-if="showOpenFileModal"
+    :mapping-document="mappingDocument"
+    :selected-row-indices="selectedRowIndices"
+    :last-clicked-row-index="lastClickedRowIndex"
+    :is-locked="isCurrentLocked"
+    :paste-preset-block="pastePresetBlock"
+    :schedule-cache-save="scheduleCacheSave"
+    :show-toast="showToast"
+    @close="showOpenFileModal = false"
+    @open-local-file="fileInput?.click()"
+  />
+
   <main>
     <div id="mappingFileSelectContainer" class="pt-3">
-      <MenuButton
-        variant="primary"
-        border-radius="left"
-        title="Open a .MAP or .JSON file."
-        @click="fileInput?.click()"
-      >
-        Open Mapping File
-      </MenuButton>
-      <input id="fileInput" class="d-none" type="file" accept=".map, .json" ref="fileInput" @change="readFile" />
-      <MenuButton
-        variant="primary"
-        border-radius="none"
-        data-variant="reset"
-        :disabled="isCurrentLocked"
-        @click="reset"
-        title="Reset the current mapping file"
-      >
-        Reset
-      </MenuButton>
-      <MenuButton
-        variant="primary"
-        border-radius="none"
-        class="position-relative analyze-btn"
-        :class="{ 'analyze-warning': warningCount > 0 }"
-        @click="runAnalysis"
-        title="Run static analysis to detect potential issues"
-      >
-        Analyze
-        <span
-          v-if="warningCount > 0"
-          class="position-absolute top-0 end-0 translate-middle-y badge rounded-pill"
-          :class="errorCount > 0 ? 'bg-danger' : 'bg-warning text-dark'"
-        >
-          {{ warningCount }}
-          <span class="visually-hidden">warnings</span>
-        </span>
-      </MenuButton>
-
-      <!-- A/B Cache Toggle and Filename -->
-      <MenuButton
-        variant="slot"
-        :active="activeSlot === 'A'"
-        :locked="isLockedA"
-        :has-data="hasDataA"
-        @click="handleSlotSwitch('A')"
-        :title="activeSlot === 'A' ? (isLockedA ? 'Click to unlock [1]' : 'Click to lock [1]') : (isLockedA ? 'Switch to slot 1 (locked) [1]' : 'Switch to slot 1 [1]')"
-      >
-        1
-      </MenuButton>
-      <MenuButton
-        variant="slot"
-        :active="activeSlot === 'B'"
-        :locked="isLockedB"
-        :has-data="hasDataB"
-        @click="handleSlotSwitch('B')"
-        :title="activeSlot === 'B' ? (isLockedB ? 'Click to unlock [2]' : 'Click to lock [2]') : (isLockedB ? 'Switch to slot 2 (locked) [2]' : 'Switch to slot 2 [2]')"
-      >
-        2
-      </MenuButton>
+      <input id="fileInput" class="d-none" type="file" accept=".map, .json" ref="fileInput" @change="() => { readFile(); showOpenFileModal = false; }" />
       <input
         type="text"
         class="filename-input"
@@ -1142,27 +1118,6 @@ function downloadMap() {
         @toggle="globalDocPanelExpanded = !globalDocPanelExpanded"
       />
     </div>
-    <div id="downloadActionsContainer" class="pt-3">
-      <div class="download-label">Save as:</div>
-      <div class="download-buttons">
-        <MenuButton variant="download" border-radius="left" @click="downloadHtml">
-          HTML
-        </MenuButton>
-        <MenuButton variant="download" border-radius="none" @click="downloadMarkdown(false)">
-          Markdown
-        </MenuButton>
-        <MenuButton variant="download" border-radius="none" @click="downloadMarkdown(true)">
-          NS Screens (MD)
-        </MenuButton>
-        <MenuButton variant="download" border-radius="none" @click="downloadJson">
-          JSON
-        </MenuButton>
-        <MenuButton variant="download" border-radius="right" @click="downloadMap">
-          MAP
-        </MenuButton>
-      </div>
-    </div>
-
     <div id="docEditor" class="pt-3">
       <div id="rowsGridContainerHeader" class="pt-3">
         <div>Row</div>

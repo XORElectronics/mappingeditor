@@ -1289,6 +1289,66 @@ interface SerializedSlotHistory {
 
 ---
 
+## Phase 7: Preset Library & Block Import
+
+**Status:** ✅ Implemented (2026-03-12)
+
+### Summary
+
+Users can compose complex NerdSEQ mappings by importing reusable preset blocks stored as `.map` files. The feature adds a collapsible **Import Preset** button to the main toolbar. When expanded, users can:
+
+1. Select a preset from a built-in library
+2. Choose a row range within the preset (start/end row)
+3. Pick an insert mode: **Append to end**, **Insert at cursor**, or **Replace selection**
+4. Click **Import Block** — the rows merge into the active mapping with full undo/redo support
+
+### File Serving
+
+Preset `.map` files are served as Vite static assets from `editor/public/examples/`. A `manifest.json` lists available presets. Fetched at runtime via `fetch('/examples/manifest.json')`.
+
+**Initial presets:** ONE.MAP, TWO.MAP, THREE.MAP
+
+### Phase 7.1: File Serving Setup ✅
+
+- `editor/public/examples/` directory with MAP files and `manifest.json`
+- Manifest format: `{ presets: [{ id, filename, label }] }`
+
+### Phase 7.2: Core Import Logic ✅
+
+- `editor/src/composables/usePresetImport.ts`: manifest fetching, preset loading via `MappingDocumentParser.parse()`, `getUsedRowCount()`, `findAppendIndex()`
+- `editor/src/composables/useClipboard.ts`: `pastePresetBlock(block, targetStartIndex)` — builds `PasteRowCommand` + `BatchCommand` for full undo/redo
+
+### Phase 7.3: UI Panel ✅
+
+- `editor/src/components/PresetImportPanel.vue`: Inline collapsible panel with preset selector, row range inputs, insert mode radio buttons, and import button
+- Placed in main toolbar after the Analyze button
+- Import is disabled when locked, no preset loaded, or invalid range
+
+### Critical Files
+
+| File | Role |
+|------|------|
+| `editor/public/examples/manifest.json` | Preset index |
+| `editor/public/examples/*.MAP` | Preset binary files |
+| `editor/src/composables/usePresetImport.ts` | Manifest + file loading |
+| `editor/src/composables/useClipboard.ts` | `pastePresetBlock()` function |
+| `editor/src/components/PresetImportPanel.vue` | UI component |
+
+### Reused Architecture
+
+- `MappingDocumentParser.parse()` — no new parsing logic
+- `PasteRowCommand` + `BatchCommand` — undo/redo already handled
+- `showToast()` — user feedback (truncation warnings, success)
+
+### Future Enhancements
+
+- Add more presets to `/examples/` and `editor/public/examples/`
+- Preset metadata (description, tags, author)
+- Preset browser with preview
+- Community preset sharing
+
+---
+
 ## Technical Considerations
 
 ### Simulation vs Hardware Reality

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import BasePanel from './BasePanel.vue';
+import CollapsibleSection from './CollapsibleSection.vue';
 import { ROW_COLORS } from '../constants/colors';
 import { usePanelLayout } from '../composables/usePanelLayout';
 
@@ -11,6 +12,11 @@ const props = defineProps<{
   canMoveUp: boolean;
   canMoveDown: boolean;
   isLocked: boolean;
+  activeSlot: 'A' | 'B';
+  isLockedA: boolean;
+  isLockedB: boolean;
+  hasDataA: boolean;
+  hasDataB: boolean;
 }>();
 
 const { selectionRight } = usePanelLayout();
@@ -25,12 +31,21 @@ const emit = defineEmits<{
   (e: 'clear'): void;
   (e: 'setColor', color: string | null): void;
   (e: 'cancel'): void;
+  (e: 'switchSlot', slot: 'A' | 'B'): void;
 }>();
 
 // Track expanded state - initialize from localStorage to match BasePanel's initial state
 const storageKey = 'selection-toolbar-expanded';
 const initialExpanded = localStorage.getItem(storageKey) === 'true';
 const isExpanded = ref(initialExpanded);
+
+function getSlotTitle(slot: 'A' | 'B'): string {
+  const isActive = props.activeSlot === slot;
+  const isLocked = slot === 'A' ? props.isLockedA : props.isLockedB;
+  const num = slot === 'A' ? '1' : '2';
+  if (isActive) return isLocked ? `Click to unlock [${num}]` : `Click to lock [${num}]`;
+  return isLocked ? `Switch to slot ${num} (locked) [${num}]` : `Switch to slot ${num} [${num}]`;
+}
 
 // Panel title based on selection count and expanded state
 const panelTitle = computed(() => {
@@ -74,6 +89,34 @@ function onExpandedChange(expanded: boolean): void {
   >
 
     <div class="toolbar-content">
+      <!-- Slots subsection -->
+      <div class="slots-section">
+        <CollapsibleSection label="Slots" storage-key="selection-slots-expanded">
+          <div class="slots-buttons">
+            <button
+              class="slot-btn"
+              :class="{
+                'slot-btn--active': activeSlot === 'A',
+                'slot-btn--locked': isLockedA,
+                'slot-btn--no-data': !hasDataA
+              }"
+              :title="getSlotTitle('A')"
+              @click="$emit('switchSlot', 'A')"
+            >1</button>
+            <button
+              class="slot-btn"
+              :class="{
+                'slot-btn--active': activeSlot === 'B',
+                'slot-btn--locked': isLockedB,
+                'slot-btn--no-data': !hasDataB
+              }"
+              :title="getSlotTitle('B')"
+              @click="$emit('switchSlot', 'B')"
+            >2</button>
+          </div>
+        </CollapsibleSection>
+      </div>
+
       <!-- No selection state -->
       <div v-if="!hasSelection" class="no-selection">
         <div class="empty-message">No rows selected</div>
@@ -190,6 +233,65 @@ function onExpandedChange(expanded: boolean): void {
 <style scoped>
 .toolbar-content {
   padding: 4px;
+}
+
+/* Slots subsection */
+.slots-section {
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(52, 204, 153, 0.3);
+  padding-bottom: 4px;
+}
+
+/* Remove CollapsibleSection's top border/margin — the panel frame is enough */
+.slots-section :deep(.cs-header) {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 2px;
+}
+
+.slots-buttons {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.slot-btn {
+  flex: 1;
+  height: 28px;
+  padding: 0;
+  background-color: #000;
+  border: 1px solid #34cc99;
+  color: #34cc99;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slot-btn:hover {
+  background-color: rgba(52, 204, 153, 0.3);
+}
+
+.slot-btn--active {
+  background-color: #F1F700;
+  color: #000;
+  border-color: #F1F700;
+}
+
+.slot-btn--no-data {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.slot-btn--locked:not(.slot-btn--active) {
+  border-color: #dc3545;
+  border-style: solid;
+  color: #dc3545;
+}
+
+.slot-btn--active.slot-btn--locked {
+  box-shadow: 0 0 8px 2px #dc3545, inset 0 0 4px rgba(220, 53, 69, 0.3);
+  border-color: #dc3545;
 }
 
 .no-selection {

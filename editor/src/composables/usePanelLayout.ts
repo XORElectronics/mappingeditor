@@ -4,7 +4,7 @@ import { useMidi } from './useMidi';
 
 // Panel width constants (extracted from individual panel components)
 const PANEL_WIDTHS = {
-  settings:  { minimized: 100, expanded: 180 },
+  settings:  { minimized: 100, expanded: 220 },
   selection: { minimized: 120, expanded: 260 },
   midi:      { minimized: 150, expanded: 320 },
   variables: { minimized: 110, expanded: 300 },
@@ -17,8 +17,8 @@ const BASE_OFFSET = 10;
 export function usePanelLayout() {
   const {
     settingsPanelExpanded, selectionToolbarExpanded, midiMonitorExpanded,
-    variableMonitorExpanded,
-    showSelectionToolbar, showMidiMonitor, showVariableMonitor
+    variableMonitorExpanded, logMonitorExpanded,
+    showSelectionToolbar, showMidiMonitor, showVariableMonitor, showLogMonitor
   } = usePanelState();
 
   const { isSupported: midiSupported } = useMidi();

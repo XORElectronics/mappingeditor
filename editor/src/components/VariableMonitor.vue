@@ -30,6 +30,8 @@ const props = defineProps<{
   variableUsage: VariableUsageInfo[]
   displayRowIndexAsHex: boolean
   rows?: RowLike[]
+  warningCount?: number
+  errorCount?: number
 }>()
 
 const { variablesRight } = usePanelLayout()
@@ -37,6 +39,7 @@ const { variablesRight } = usePanelLayout()
 const emit = defineEmits<{
   expandedChange: [expanded: boolean]
   scrollToRow: [rowIndex: number]
+  analyze: []
 }>()
 
 // Value display format
@@ -678,6 +681,23 @@ function stopResize(): void {
           </button>
         </div>
       </div>
+
+      <!-- Analyze button row -->
+      <div class="control-group analyze-group">
+        <button
+          class="analyze-btn"
+          :class="{ 'has-errors': (errorCount ?? 0) > 0, 'has-warnings': (warningCount ?? 0) > 0 && (errorCount ?? 0) === 0 }"
+          @click="$emit('analyze')"
+          title="Run static analysis"
+        >
+          Analyze
+          <span
+            v-if="(warningCount ?? 0) > 0"
+            class="analyze-badge"
+            :class="(errorCount ?? 0) > 0 ? 'badge-error' : 'badge-warning'"
+          >{{ warningCount }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Variables Grid Container (Scrollable) -->
@@ -899,6 +919,65 @@ function stopResize(): void {
 .toggle-btn.mode-disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* Analyze button */
+.analyze-group {
+  border-top: 1px solid rgba(52, 204, 153, 0.2);
+  padding-top: 5px;
+  margin-top: 0;
+}
+
+.analyze-btn {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  background: rgba(52, 204, 153, 0.15);
+  border: 1px solid rgba(52, 204, 153, 0.5);
+  color: #34cc99;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.analyze-btn:hover {
+  background: rgba(52, 204, 153, 0.3);
+  border-color: #34cc99;
+}
+
+.analyze-btn.has-warnings {
+  border-color: #ffc107;
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.analyze-btn.has-errors {
+  border-color: #dc3545;
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.analyze-badge {
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.badge-error {
+  background-color: #dc3545;
+  color: #fff;
 }
 
 /* Variables Container - Scrollable */

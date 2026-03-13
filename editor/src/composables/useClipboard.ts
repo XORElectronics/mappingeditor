@@ -171,6 +171,9 @@ export interface UseClipboardReturn {
   moveRowsUp: (rowIndices: number[]) => MoveRowsResult;
   moveRowsDown: (rowIndices: number[]) => MoveRowsResult;
 
+  // Preset block import
+  pastePresetBlock: (block: MappingRow[], targetStartIndex: number) => void;
+
   // Source operations
   copySource: (rowIndex: number) => void;
   pasteSource: (rowIndex: number) => void;
@@ -570,6 +573,51 @@ export function useClipboard(options: UseClipboardOptions): UseClipboardReturn {
     clearRows(rowIndices);
   }
 
+  function pastePresetBlock(block: MappingRow[], targetStartIndex: number): void {
+    if (!execCmd || !options.rowComments) return;
+
+    const cmds: import('../commands/Command').Command[] = [];
+    const maxRows = mappingDocument.value.rows.length;
+
+    for (let i = 0; i < block.length; i++) {
+      const targetIndex = targetStartIndex + i;
+      if (targetIndex >= maxRows) break;
+
+      const src = block[i].source;
+      const dst = block[i].destination;
+      const pasteData = {
+        rowIndex: targetIndex,
+        source: {
+          typeKey: src.type.key, typeAbbr: src.type.abbr, typeDesc: src.type.description,
+          funcKey: src.function.key, funcAbbr: src.function.abbr, funcDesc: src.function.description,
+          extraKey: src.extra.keyOrValue, extraAbbr: src.extra.abbr, extraDesc: src.extra.description,
+          selectedTypeKey: src.type.key
+        },
+        destination: {
+          typeKey: dst.type.key, typeAbbr: dst.type.abbr, typeDesc: dst.type.description,
+          funcKey: dst.function.key, funcAbbr: dst.function.abbr, funcDesc: dst.function.description,
+          extraKey: dst.extra.keyOrValue, extraAbbr: dst.extra.abbr, extraDesc: dst.extra.description,
+          selectedTypeKey: dst.type.key
+        },
+        comment: null
+      };
+      cmds.push(new PasteRowCommand(
+        targetIndex,
+        pasteData,
+        mappingDocument.value as import('../modules/documentModel').MappingDocument,
+        options.rowComments.value as Record<number, string>,
+        currentlySelectedSourceTypes.value,
+        currentlySelectedDestinationTypes.value
+      ));
+    }
+
+    if (cmds.length === 1) {
+      execCmd(cmds[0]);
+    } else if (cmds.length > 1) {
+      execCmd(new BatchCommand(cmds, `Import ${cmds.length} preset rows`));
+    }
+  }
+
   // Helper: Swap row contents between two rows
   function swapRowContents(rowA: NonNullable<ReturnType<typeof findRow>>, rowB: NonNullable<ReturnType<typeof findRow>>): void {
     const tempSource = deepCloneSource(rowA.source);
@@ -696,6 +744,7 @@ export function useClipboard(options: UseClipboardOptions): UseClipboardReturn {
     pasteRows,
     cutRows,
     clearRows,
+    pastePresetBlock,
     moveRowsUp,
     moveRowsDown,
     copySource,

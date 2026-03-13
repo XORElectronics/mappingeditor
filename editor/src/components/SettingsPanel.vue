@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import BasePanel from './BasePanel.vue'
+import CollapsibleSection from './CollapsibleSection.vue'
 
 const props = defineProps<{
   displayRowIndexAsHex: boolean
@@ -9,6 +9,7 @@ const props = defineProps<{
   showVariableMonitor: boolean
   showLogMonitor: boolean
   showDescription: boolean
+  isLocked: boolean
   midiLearnAutoAdvance: boolean
   pasteAutoAdvance: 'disabled' | 'rows-only' | 'all'
   // Info section props
@@ -27,24 +28,14 @@ const emit = defineEmits<{
   'update:showDescription': [value: boolean]
   'update:midiLearnAutoAdvance': [value: boolean]
   'update:pasteAutoAdvance': [value: 'disabled' | 'rows-only' | 'all']
+  'open-file': []
+  'reset': []
+  'download-html': []
+  'download-markdown': []
+  'download-markdown-ns': []
+  'download-json': []
+  'download-map': []
 }>()
-
-// Sub-section expanded states
-const autoAdvanceSectionExpanded = ref(localStorage.getItem('settings-auto-advance-expanded') !== 'false')
-const panelsSectionExpanded = ref(localStorage.getItem('settings-panels-expanded') !== 'false')
-const infoSectionExpanded = ref(localStorage.getItem('settings-info-expanded') !== 'false')
-
-watch(autoAdvanceSectionExpanded, (val) => {
-  localStorage.setItem('settings-auto-advance-expanded', val.toString())
-})
-
-watch(panelsSectionExpanded, (val) => {
-  localStorage.setItem('settings-panels-expanded', val.toString())
-})
-
-watch(infoSectionExpanded, (val) => {
-  localStorage.setItem('settings-info-expanded', val.toString())
-})
 
 function toggleHexDisplay(): void {
   emit('update:displayRowIndexAsHex', !props.displayRowIndexAsHex)
@@ -70,7 +61,6 @@ function toggleDescription(): void {
   emit('update:showDescription', !props.showDescription)
 }
 
-
 function toggleMidiLearnAutoAdvance(): void {
   emit('update:midiLearnAutoAdvance', !props.midiLearnAutoAdvance)
 }
@@ -89,10 +79,6 @@ function getPasteAutoAdvanceLabel(): string {
     case 'all': return 'ALL'
   }
 }
-
-function onExpandedChange(expanded: boolean): void {
-  emit('expandedChange', expanded)
-}
 </script>
 
 <template>
@@ -101,131 +87,110 @@ function onExpandedChange(expanded: boolean): void {
     storage-key="settings-panel-expanded"
     right-position="10px"
     minimized-width="100px"
-    expanded-width="180px"
+    expanded-width="220px"
     custom-max-height="none"
-    @expanded-change="onExpandedChange"
+    @expanded-change="$emit('expandedChange', $event)"
   >
     <div class="settings-content">
-      <div class="setting-item">
-      <span class="setting-label">Row Index Format</span>
-      <button
-        class="toggle-btn"
-        :class="{ active: displayRowIndexAsHex }"
-        @click="toggleHexDisplay"
-        :title="displayRowIndexAsHex ? 'Switch to decimal (0-69)' : 'Switch to hexadecimal (00-45)'"
-      >
-        {{ displayRowIndexAsHex ? 'HEX' : 'DEC' }}
-      </button>
-    </div>
 
-    <div class="setting-divider subsection-divider" @click="autoAdvanceSectionExpanded = !autoAdvanceSectionExpanded">
-      <span class="divider-label">Auto-Advance</span>
-      <span class="subsection-toggle-icon" :class="{ expanded: autoAdvanceSectionExpanded }">▸</span>
-    </div>
+      <CollapsibleSection label="File" storage-key="settings-file-expanded">
+        <div class="setting-item file-actions">
+          <button class="file-btn file-btn--open" @click="$emit('open-file')">Open Mapping File</button>
+          <button class="file-btn file-btn--reset" :disabled="isLocked" @click="$emit('reset')">Reset</button>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">Save as:</span>
+          <div class="save-grid">
+            <button class="save-btn" @click="$emit('download-html')">HTML</button>
+            <button class="save-btn" @click="$emit('download-markdown')">MD</button>
+            <button class="save-btn" @click="$emit('download-markdown-ns')">NS MD</button>
+            <button class="save-btn" @click="$emit('download-json')">JSON</button>
+            <button class="save-btn" @click="$emit('download-map')">MAP</button>
+          </div>
+        </div>
+      </CollapsibleSection>
 
-    <div v-if="autoAdvanceSectionExpanded" class="collapsible-section">
-      <div class="setting-item">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            :checked="midiLearnAutoAdvance"
-            @change="toggleMidiLearnAutoAdvance"
-          />
-          <span>MIDI Learn Auto-Advance</span>
-        </label>
-      </div>
+      <CollapsibleSection label="Row Index Format" storage-key="settings-row-format-expanded">
+        <div class="setting-item">
+          <button
+            class="toggle-btn"
+            :class="{ active: displayRowIndexAsHex }"
+            @click="toggleHexDisplay"
+            :title="displayRowIndexAsHex ? 'Switch to decimal (0-69)' : 'Switch to hexadecimal (00-45)'"
+          >
+            {{ displayRowIndexAsHex ? 'HEX' : 'DEC' }}
+          </button>
+        </div>
+      </CollapsibleSection>
 
-      <div class="setting-item">
-        <span class="setting-label">Paste Auto-Advance</span>
-        <button
-          class="toggle-btn"
-          :class="{ active: pasteAutoAdvance !== 'disabled' }"
-          @click="togglePasteAutoAdvance"
-          :title="pasteAutoAdvance === 'disabled' ? 'Disabled' : pasteAutoAdvance === 'rows-only' ? 'Only for whole rows' : 'For all pastes (rows, source, destination)'"
-        >
-          {{ getPasteAutoAdvanceLabel() }}
-        </button>
-      </div>
-    </div>
+      <CollapsibleSection label="Auto-Advance" storage-key="settings-auto-advance-expanded">
+        <div class="setting-item">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              :checked="midiLearnAutoAdvance"
+              @change="toggleMidiLearnAutoAdvance"
+            />
+            <span>MIDI Learn Auto-Advance</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">Paste Auto-Advance</span>
+          <button
+            class="toggle-btn"
+            :class="{ active: pasteAutoAdvance !== 'disabled' }"
+            @click="togglePasteAutoAdvance"
+            :title="pasteAutoAdvance === 'disabled' ? 'Disabled' : pasteAutoAdvance === 'rows-only' ? 'Only for whole rows' : 'For all pastes (rows, source, destination)'"
+          >
+            {{ getPasteAutoAdvanceLabel() }}
+          </button>
+        </div>
+      </CollapsibleSection>
 
-    <div class="setting-divider subsection-divider" @click="panelsSectionExpanded = !panelsSectionExpanded">
-      <span class="divider-label">Panels</span>
-      <span class="subsection-toggle-icon" :class="{ expanded: panelsSectionExpanded }">▸</span>
-    </div>
+      <CollapsibleSection label="Panels" storage-key="settings-panels-expanded">
+        <div class="setting-item">
+          <label class="checkbox-label">
+            <input type="checkbox" :checked="showSelectionToolbar" @change="toggleSelectionToolbar" />
+            <span>Selection Toolbar</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label class="checkbox-label">
+            <input type="checkbox" :checked="showMidiMonitor" @change="toggleMidiMonitor" />
+            <span>MIDI Monitor</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label class="checkbox-label">
+            <input type="checkbox" :checked="showVariableMonitor" @change="toggleVariableMonitor" />
+            <span>Variable Monitor</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label class="checkbox-label">
+            <input type="checkbox" :checked="showLogMonitor" @change="toggleLogMonitor" />
+            <span>Log Monitor</span>
+          </label>
+        </div>
+        <div class="setting-item">
+          <label class="checkbox-label">
+            <input type="checkbox" :checked="showDescription" @change="toggleDescription" />
+            <span>Description</span>
+          </label>
+        </div>
+      </CollapsibleSection>
 
-    <div v-if="panelsSectionExpanded" class="collapsible-section">
-      <div class="setting-item">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            :checked="showSelectionToolbar"
-            @change="toggleSelectionToolbar"
-          />
-          <span>Selection Toolbar</span>
-        </label>
-      </div>
+      <CollapsibleSection label="Info" storage-key="settings-info-expanded">
+        <div class="info-item">
+          <span class="info-label">Header:</span>
+          <span class="info-value">{{ headerText }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Firmware:</span>
+          <span class="info-value">{{ firmwareMajor }}.{{ firmwareMinor }}</span>
+        </div>
+      </CollapsibleSection>
 
-      <div class="setting-item">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            :checked="showMidiMonitor"
-            @change="toggleMidiMonitor"
-          />
-          <span>MIDI Monitor</span>
-        </label>
-      </div>
-
-      <div class="setting-item">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            :checked="showVariableMonitor"
-            @change="toggleVariableMonitor"
-          />
-          <span>Variable Monitor</span>
-        </label>
-      </div>
-
-      <div class="setting-item">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            :checked="showLogMonitor"
-            @change="toggleLogMonitor"
-          />
-          <span>Log Monitor</span>
-        </label>
-      </div>
-
-      <div class="setting-item">
-        <label class="checkbox-label">
-          <input
-            type="checkbox"
-            :checked="showDescription"
-            @change="toggleDescription"
-          />
-          <span>Description</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="setting-divider subsection-divider" @click="infoSectionExpanded = !infoSectionExpanded">
-      <span class="divider-label">Info</span>
-      <span class="subsection-toggle-icon" :class="{ expanded: infoSectionExpanded }">▸</span>
-    </div>
-
-    <div v-if="infoSectionExpanded" class="collapsible-section">
-      <div class="info-item">
-        <span class="info-label">Header:</span>
-        <span class="info-value">{{ headerText }}</span>
-      </div>
-
-      <div class="info-item">
-        <span class="info-label">Firmware:</span>
-        <span class="info-value">{{ firmwareMajor }}.{{ firmwareMinor }}</span>
-      </div>
-    </div>
     </div>
   </BasePanel>
 </template>
@@ -235,6 +200,13 @@ function onExpandedChange(expanded: boolean): void {
   display: flex;
   flex-direction: column;
   padding: 4px;
+}
+
+/* First section needs no top border — the panel frame provides the visual boundary */
+.settings-content :deep(.cs-header:first-child) {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 2px;
 }
 
 .setting-item {
@@ -256,7 +228,6 @@ function onExpandedChange(expanded: boolean): void {
   padding: 4px 6px;
   background-color: rgba(52, 204, 153, 0.2);
   border: 1px solid #34cc99;
-  /* border-radius: 3px; */
   color: #34cc99;
   font-weight: bold;
   cursor: pointer;
@@ -273,58 +244,7 @@ function onExpandedChange(expanded: boolean): void {
   border-color: #F1F700;
 }
 
-.setting-divider {
-  border-top: 1px solid rgba(52, 204, 153, 0.3);
-  margin: 8px 0;
-  padding-top: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
 
-.setting-divider:hover .divider-label {
-  color: #F1F700;
-}
-
-.divider-label {
-  color: #34cc99;
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.subsection-toggle-icon {
-  color: #34cc99;
-  font-size: 10px;
-  transition: transform 0.2s ease;
-  display: inline-block;
-}
-
-.subsection-toggle-icon.expanded {
-  transform: rotate(90deg);
-}
-
-.setting-divider:hover .subsection-toggle-icon {
-  color: #F1F700;
-}
-
-.collapsible-section {
-  animation: slideIn 0.2s ease;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .checkbox-label {
   display: flex;
@@ -349,6 +269,65 @@ function onExpandedChange(expanded: boolean): void {
 
 .checkbox-label input[type="checkbox"]:checked + span {
   color: #34cc99;
+}
+
+/* File section styles */
+.file-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.file-btn {
+  flex: 1;
+  font-size: 10px;
+  padding: 4px 6px;
+  background-color: rgba(52, 204, 153, 0.15);
+  border: 1px solid #34cc99;
+  color: #34cc99;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.file-btn:hover:not(:disabled) {
+  background-color: rgba(52, 204, 153, 0.35);
+}
+
+.file-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.file-btn--reset {
+  background-color: rgba(220, 53, 69, 0.15);
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.file-btn--reset:hover:not(:disabled) {
+  background-color: rgba(220, 53, 69, 0.35);
+}
+
+.save-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.save-btn {
+  font-size: 10px;
+  padding: 3px 2px;
+  background-color: rgba(52, 204, 153, 0.1);
+  border: 1px solid rgba(52, 204, 153, 0.5);
+  color: #34cc99;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-align: center;
+}
+
+.save-btn:hover {
+  background-color: rgba(52, 204, 153, 0.3);
 }
 
 /* Info section styles */
