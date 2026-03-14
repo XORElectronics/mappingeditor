@@ -994,7 +994,7 @@ function downloadHtml() {
 }
 
 function downloadMarkdown(useAbbrs: boolean = false) {
-  const output = formatters.toMarkdown(mappingDocument.value as MappingDocument, useAbbrs);
+  const output = formatters.toMarkdown(mappingDocument.value as MappingDocument, useAbbrs, rowComments.value);
   const blob = new Blob([output], { type: "text/markdown" });
   downloadFile(blob, `${mappingDocument.value.header.fileName}.md`);
   showToast('Exported to Markdown successfully', 'success', 3000);

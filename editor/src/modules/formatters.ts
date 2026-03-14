@@ -29,7 +29,7 @@ export function toHtml(document: MappingDocument, useBsStyles: boolean = false):
     return output;
 }
 
-export function toMarkdown(document: MappingDocument, useAbbrivations: boolean = false): string {
+export function toMarkdown(document: MappingDocument, useAbbrivations: boolean = false, rowComments: Record<number, string> = {}): string {
     let output = `# NerdSeq Mapping File\n\n`;
     output += `## Header\n\n`;
     output += `| Property | Value |\n`;
@@ -38,15 +38,19 @@ export function toMarkdown(document: MappingDocument, useAbbrivations: boolean =
     output += `| Major Version | ${document.header.majorVersion} |\n`;
     output += `| Minor Version | ${document.header.minorVersion} |\n`;
     output += `| FileName | ${document.header.fileName} |\n\n`;
+    if (document.globalComment?.trim()) {
+        output += `## Description\n\n${document.globalComment.trim()}\n\n`;
+    }
     output += `## Rows\n\n`;
-    output += `| Index | Source Type | Source Function | Source Extra | Destination Type | Destination Function | Destination Extra |\n`;
-    output += `| --- | --- | --- | --- | --- | --- | --- |\n`;
+    output += `| Index | Source Type | Source Function | Source Extra | Destination Type | Destination Function | Destination Extra | Row Comment |\n`;
+    output += `| --- | --- | --- | --- | --- | --- | --- | --- |\n`;
     document.rows.forEach(row => {
+        const comment = rowComments[row.index]?.trim() || '----';
         if (useAbbrivations) {
-            output += `| ${row.index.toString(16).toUpperCase().padStart(2, '0')} | ${row.source.type.abbr} | ${row.source.function.abbr} | ${row.source.extra.abbr} | ${row.destination.type.abbr} | ${row.destination.function.abbr} | ${row.destination.extra.abbr} |\n`;
+            output += `| ${row.index.toString(16).toUpperCase().padStart(2, '0')} | ${row.source.type.abbr} | ${row.source.function.abbr} | ${row.source.extra.abbr} | ${row.destination.type.abbr} | ${row.destination.function.abbr} | ${row.destination.extra.abbr} | ${comment} |\n`;
             return;
         }
-        output += `| ${row.index} | ${row.source.type.description} | ${row.source.function.description} | ${row.source.extra.description} | ${row.destination.type.description} | ${row.destination.function.description} | ${row.destination.extra.description} |\n`;
+        output += `| ${row.index} | ${row.source.type.description} | ${row.source.function.description} | ${row.source.extra.description} | ${row.destination.type.description} | ${row.destination.function.description} | ${row.destination.extra.description} | ${comment} |\n`;
     });
     output += `\n## Variables\n\n`;
     output += `| Name | Value |\n`;
