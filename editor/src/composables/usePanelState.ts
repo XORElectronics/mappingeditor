@@ -5,7 +5,6 @@ const SELECTION_TOOLBAR_VISIBLE_KEY = 'nerdseq-show-selection-toolbar';
 const MIDI_MONITOR_VISIBLE_KEY = 'nerdseq-show-midi-monitor';
 const VARIABLE_MONITOR_VISIBLE_KEY = 'nerdseq-show-variable-monitor';
 const LOG_MONITOR_VISIBLE_KEY = 'nerdseq-show-log-monitor';
-const DESCRIPTION_VISIBLE_KEY = 'nerdseq-show-description';
 const MIDI_LEARN_AUTO_ADVANCE_KEY = 'nerdseq-midi-learn-auto-advance';
 const PASTE_AUTO_ADVANCE_KEY = 'nerdseq-paste-auto-advance';
 const ROW_INDEX_DISPLAY_KEY = 'row-index-display-hex';
@@ -20,25 +19,12 @@ function createPanelState() {
   const variableMonitorExpanded = ref(localStorage.getItem('variable-monitor-expanded') === 'true');
   const logMonitorExpanded = ref(localStorage.getItem('warning-log-expanded') === 'true');
 
-  // Global Documentation Panel expanded state
-  const getInitialGlobalDocExpanded = (): boolean => {
-    const stored = localStorage.getItem('global-doc-panel-expanded');
-    return stored ? JSON.parse(stored) : false;
-  };
-  const globalDocPanelExpanded = ref(getInitialGlobalDocExpanded());
-
-  // Persist expanded state changes
-  watch(globalDocPanelExpanded, (newValue) => {
-    localStorage.setItem('global-doc-panel-expanded', JSON.stringify(newValue));
-  });
-
   // Panel visibility state (controlled from Settings Panel)
   // Selection Toolbar defaults to true (enabled by default)
   const showSelectionToolbar = ref(localStorage.getItem(SELECTION_TOOLBAR_VISIBLE_KEY) !== 'false');
   const showMidiMonitor = ref(localStorage.getItem(MIDI_MONITOR_VISIBLE_KEY) === 'true');
   const showVariableMonitor = ref(localStorage.getItem(VARIABLE_MONITOR_VISIBLE_KEY) === 'true');
   const showLogMonitor = ref(localStorage.getItem(LOG_MONITOR_VISIBLE_KEY) === 'true');
-  const showDescription = ref(localStorage.getItem(DESCRIPTION_VISIBLE_KEY) === 'true');
   const midiLearnAutoAdvance = ref(localStorage.getItem(MIDI_LEARN_AUTO_ADVANCE_KEY) !== 'false'); // Default: true
 
   // Initialize paste auto-advance setting with proper type handling
@@ -69,10 +55,6 @@ function createPanelState() {
     localStorage.setItem(LOG_MONITOR_VISIBLE_KEY, val.toString());
     if (!val) logMonitorExpanded.value = false;
   });
-  watch(showDescription, (val) => {
-    localStorage.setItem(DESCRIPTION_VISIBLE_KEY, val.toString());
-    if (!val) globalDocPanelExpanded.value = false;
-  });
   watch(midiLearnAutoAdvance, (val) => {
     localStorage.setItem(MIDI_LEARN_AUTO_ADVANCE_KEY, val.toString());
   });
@@ -99,13 +81,11 @@ function createPanelState() {
     variableMonitorExpanded,
     selectionToolbarExpanded,
     logMonitorExpanded,
-    globalDocPanelExpanded,
     // Panel visibility
     showSelectionToolbar,
     showMidiMonitor,
     showVariableMonitor,
     showLogMonitor,
-    showDescription,
     // Auto-advance settings
     midiLearnAutoAdvance,
     pasteAutoAdvance,

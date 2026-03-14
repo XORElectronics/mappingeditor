@@ -28,7 +28,6 @@ import RowCommentSection from './RowCommentSection.vue';
 import SelectionToolbar from './SelectionToolbar.vue';
 import SettingsPanel from './SettingsPanel.vue';
 import LogMonitor from './LogMonitor.vue';
-import GlobalDocumentationPanel from './GlobalDocumentationPanel.vue';
 import PresetLibraryModal from './PresetLibraryModal.vue';
 import LocalImportModal from './LocalImportModal.vue';
 import IconButton from './IconButton.vue';
@@ -117,12 +116,10 @@ const {
   variableMonitorExpanded,
   selectionToolbarExpanded,
   logMonitorExpanded,
-  globalDocPanelExpanded,
   showSelectionToolbar,
   showMidiMonitor,
   showVariableMonitor,
   showLogMonitor,
-  showDescription,
   midiLearnAutoAdvance,
   pasteAutoAdvance,
   displayRowIndexAsHex,
@@ -1054,7 +1051,6 @@ function downloadMap() {
     v-model:show-midi-monitor="showMidiMonitor"
     v-model:show-variable-monitor="showVariableMonitor"
     v-model:show-log-monitor="showLogMonitor"
-    v-model:show-description="showDescription"
     v-model:midi-learn-auto-advance="midiLearnAutoAdvance"
     v-model:paste-auto-advance="pasteAutoAdvance"
     :header-text="mappingDocument.header.headerText"
@@ -1077,6 +1073,10 @@ function downloadMap() {
     :is-locked-b="isLockedB"
     :has-data-a="hasDataA"
     :has-data-b="hasDataB"
+    :file-name="mappingDocument.header.fileName"
+    :global-comment="mappingDocument.globalComment"
+    @update:file-name="mappingDocument.header.fileName = $event"
+    @update:global-comment="mappingDocument.globalComment = $event"
     @expanded-change="selectionToolbarExpanded = $event"
     @cut="handleMultiCut"
     @copy="handleMultiCopy"
@@ -1164,24 +1164,6 @@ function downloadMap() {
   />
 
   <main>
-    <div id="mappingFileSelectContainer" class="pt-3">
-      <input
-        type="text"
-        class="filename-input"
-        v-model="mappingDocument.header.fileName"
-        :disabled="isCurrentLocked"
-        :class="{ 'input-locked': isCurrentLocked }"
-        title="File name for exports"
-      />
-
-      <!-- Global Description Panel -->
-      <GlobalDocumentationPanel
-        v-if="showDescription"
-        v-model:global-comment="mappingDocument.globalComment"
-        :expanded="globalDocPanelExpanded"
-        @toggle="globalDocPanelExpanded = !globalDocPanelExpanded"
-      />
-    </div>
     <div id="docEditor" class="pt-3">
       <div id="rowsGridContainerHeader" class="pt-3">
         <div>Row</div>
@@ -1822,60 +1804,6 @@ h2 {
   border-radius: var(--form-border-radius-right);
 }
 
-/* Consistent spacing for all controls */
-#mappingFileSelectContainer > *:not(.d-none) {
-  margin-right: 4px;
-}
-
-#mappingFileSelectContainer > *:last-child {
-  margin-right: 0;
-}
-
-/* Remove border-radius gap between grouped buttons */
-#mappingFileSelectContainer :deep(.menu-btn--radius-left),
-#mappingFileSelectContainer :deep(.menu-btn--radius-none) {
-  margin-right: 0;
-}
-
-/* Add spacing after last button in a group */
-#mappingFileSelectContainer :deep(.menu-btn--radius-right),
-#mappingFileSelectContainer :deep(.menu-btn--radius-all) {
-  margin-right: 4px;
-}
-
-/* Filename input inline with buttons */
-.filename-input {
-  height: var(--form-height);
-  background-color: var(--color-primary);
-  border: 1px solid var(--color-dark-bg);
-  border-radius: var(--form-border-radius);
-  color: #F1F700;
-  font-size: var(--form-font-size);
-  font-weight: bold;
-  padding: 0 10px;
-  width: 200px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.filename-input:focus {
-  outline: none;
-  border-color: var(--color-hover);
-  background-color: rgba(52, 204, 153, 0.3);
-}
-
-.filename-input.input-locked {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: var(--color-disabled);
-}
-
-/* Global description panel inline */
-#mappingFileSelectContainer .global-doc-panel {
-  display: inline-block;
-  margin-bottom: 0;
-  vertical-align: middle;
-}
 
 /* Locked state overlay for editor */
 .editor-locked-overlay {

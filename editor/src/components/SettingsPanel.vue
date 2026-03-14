@@ -8,7 +8,6 @@ const props = defineProps<{
   showMidiMonitor: boolean
   showVariableMonitor: boolean
   showLogMonitor: boolean
-  showDescription: boolean
   midiLearnAutoAdvance: boolean
   pasteAutoAdvance: 'disabled' | 'rows-only' | 'all'
   // Info section props
@@ -24,7 +23,6 @@ const emit = defineEmits<{
   'update:showMidiMonitor': [value: boolean]
   'update:showVariableMonitor': [value: boolean]
   'update:showLogMonitor': [value: boolean]
-  'update:showDescription': [value: boolean]
   'update:midiLearnAutoAdvance': [value: boolean]
   'update:pasteAutoAdvance': [value: 'disabled' | 'rows-only' | 'all']
 }>()
@@ -47,10 +45,6 @@ function toggleVariableMonitor(): void {
 
 function toggleLogMonitor(): void {
   emit('update:showLogMonitor', !props.showLogMonitor)
-}
-
-function toggleDescription(): void {
-  emit('update:showDescription', !props.showDescription)
 }
 
 function toggleMidiLearnAutoAdvance(): void {
@@ -146,12 +140,6 @@ function getPasteAutoAdvanceLabel(): string {
           <label class="checkbox-label">
             <input type="checkbox" :checked="showLogMonitor" @change="toggleLogMonitor" />
             <span>Log Monitor</span>
-          </label>
-        </div>
-        <div class="setting-item">
-          <label class="checkbox-label">
-            <input type="checkbox" :checked="showDescription" @change="toggleDescription" />
-            <span>Description</span>
           </label>
         </div>
       </CollapsibleSection>

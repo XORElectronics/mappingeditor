@@ -7,6 +7,8 @@ const props = defineProps<{
   defaultExpanded?: boolean;
 }>();
 
+const emit = defineEmits<{ (e: 'update:expanded', val: boolean): void }>();
+
 const slots = useSlots();
 
 const expanded = ref(
@@ -20,7 +22,10 @@ watch(expanded, (val) => {
 });
 
 function toggle(): void {
-  if (slots.default) expanded.value = !expanded.value;
+  if (slots.default) {
+    expanded.value = !expanded.value;
+    emit('update:expanded', expanded.value);
+  }
 }
 </script>
 

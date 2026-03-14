@@ -1,0 +1,7 @@
+{
+  "presets": [
+    { "id": "ONE",   "filename": "ONE.MAP",   "label": "ONE",   "category": "Utility", "description": "Example mapping ONE" },
+    { "id": "TWO",   "filename": "TWO.MAP",   "label": "TWO",   "category": "Utility", "description": "Example mapping TWO" },
+    { "id": "THREE", "filename": "THREE.MAP", "label": "THREE", "category": "Utility", "description": "Example mapping THREE" }
+  ]
+}

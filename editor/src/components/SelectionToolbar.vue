@@ -1,19 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import BasePanel from './BasePanel.vue';
 import CollapsibleSection from './CollapsibleSection.vue';
 import { ROW_COLORS } from '../constants/colors';
 import { usePanelLayout } from '../composables/usePanelLayout';
 
-const importFileRef = ref<HTMLInputElement | null>(null);
-
-function onImportFileChange(event: Event): void {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-  emit('local-file-selected', file);
-  if (importFileRef.value) importFileRef.value.value = '';
-}
-
+// Props and emits first — everything else may reference them
 const props = defineProps<{
   selectedCount: number;
   hasCopiedRow: boolean;
@@ -26,9 +18,9 @@ const props = defineProps<{
   isLockedB: boolean;
   hasDataA: boolean;
   hasDataB: boolean;
+  fileName: string;
+  globalComment: string | undefined;
 }>();
-
-const { selectionRight } = usePanelLayout();
 
 const emit = defineEmits<{
   (e: 'expandedChange', expanded: boolean): void;
@@ -49,9 +41,78 @@ const emit = defineEmits<{
   (e: 'download-markdown-ns'): void;
   (e: 'download-json'): void;
   (e: 'download-map'): void;
+  (e: 'update:fileName', value: string): void;
+  (e: 'update:globalComment', value: string | undefined): void;
 }>();
 
-// Track expanded state - initialize from localStorage to match BasePanel's initial state
+const { selectionRight } = usePanelLayout();
+
+// File input
+const importFileRef = ref<HTMLInputElement | null>(null);
+
+function onImportFileChange(event: Event): void {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  emit('local-file-selected', file);
+  if (importFileRef.value) importFileRef.value.value = '';
+}
+
+// Description wrapper resize
+const DESCRIPTION_HEIGHT_KEY = 'selection-description-height';
+const descriptionHeight = ref(Number(localStorage.getItem(DESCRIPTION_HEIGHT_KEY)) || 80);
+const isResizingDescription = ref(false);
+const resizeStartY = ref(0);
+const resizeStartHeight = ref(0);
+
+function startDescriptionResize(event: MouseEvent): void {
+  isResizingDescription.value = true;
+  resizeStartY.value = event.clientY;
+  resizeStartHeight.value = descriptionHeight.value;
+  document.addEventListener('mousemove', handleDescriptionResize);
+  document.addEventListener('mouseup', stopDescriptionResize);
+  event.preventDefault();
+}
+
+function handleDescriptionResize(event: MouseEvent): void {
+  if (!isResizingDescription.value) return;
+  const deltaY = event.clientY - resizeStartY.value;
+  descriptionHeight.value = Math.max(40, Math.min(400, resizeStartHeight.value + deltaY));
+}
+
+function stopDescriptionResize(): void {
+  isResizingDescription.value = false;
+  localStorage.setItem(DESCRIPTION_HEIGHT_KEY, String(descriptionHeight.value));
+  document.removeEventListener('mousemove', handleDescriptionResize);
+  document.removeEventListener('mouseup', stopDescriptionResize);
+}
+
+// Auto-resize textarea to fit its content
+const descriptionTextareaRef = ref<HTMLTextAreaElement | null>(null);
+const descriptionExpanded = ref(localStorage.getItem('selection-description-expanded') === 'true');
+
+function autoResizeTextarea(el: HTMLTextAreaElement): void {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function onDescriptionInput(event: Event): void {
+  const target = event.target as HTMLTextAreaElement;
+  emit('update:globalComment', target.value || undefined);
+  autoResizeTextarea(target);
+}
+
+// Re-run auto-resize when value is set externally (file open, slot switch)
+watch(() => props.globalComment, async () => {
+  await nextTick();
+  if (descriptionTextareaRef.value) autoResizeTextarea(descriptionTextareaRef.value);
+});
+
+onMounted(async () => {
+  await nextTick();
+  if (descriptionTextareaRef.value) autoResizeTextarea(descriptionTextareaRef.value);
+});
+
+// Track expanded state
 const storageKey = 'selection-toolbar-expanded';
 const initialExpanded = localStorage.getItem(storageKey) === 'true';
 const isExpanded = ref(initialExpanded);
@@ -102,10 +163,11 @@ function onExpandedChange(expanded: boolean): void {
     :right-position="selectionRight"
     minimized-width="120px"
     expanded-width="200px"
+    custom-max-height="none"
     @expanded-change="onExpandedChange"
   >
 
-    <div class="toolbar-content">
+    <div class="toolbar-content" :class="{ 'toolbar-content--description-folded': !descriptionExpanded }">
       <!-- Slots subsection -->
       <div class="slots-section">
         <CollapsibleSection label="Slots" storage-key="selection-slots-expanded">
@@ -139,6 +201,18 @@ function onExpandedChange(expanded: boolean): void {
           >
             Reset
           </button>
+          <div class="filename-row">
+            <label class="filename-label">Slot name</label>
+            <input
+              type="text"
+              class="filename-input"
+              :value="fileName"
+              :disabled="isLocked"
+              :class="{ 'input-locked': isLocked }"
+              title="File name used for all exports"
+              @input="$emit('update:fileName', ($event.target as HTMLInputElement).value)"
+            />
+          </div>
         </CollapsibleSection>
       </div>
 
@@ -153,8 +227,8 @@ function onExpandedChange(expanded: boolean): void {
             @change="onImportFileChange"
           />
           <div class="file-buttons">
-            <button class="file-btn" @click="importFileRef?.click()">Import…</button>
-            <button class="file-btn" @click="emit('open-preset-library')">Open Preset Library…</button>
+            <button class="file-btn" @click="importFileRef?.click()">Import Local Mapping</button>
+            <button class="file-btn" @click="emit('open-preset-library')">Open Preset Library</button>
           </div>
           <div class="save-label">Save as:</div>
           <div class="save-grid">
@@ -279,13 +353,38 @@ function onExpandedChange(expanded: boolean): void {
           </div>
         </div>
       </CollapsibleSection>
+
+      <!-- Description subsection -->
+      <CollapsibleSection label="Description" storage-key="selection-description-expanded" :default-expanded="false" @update:expanded="descriptionExpanded = $event">
+        <div class="description-wrapper" :style="{ height: descriptionHeight + 'px' }">
+          <textarea
+            ref="descriptionTextareaRef"
+            class="description-textarea"
+            :value="globalComment ?? ''"
+            :disabled="isLocked"
+            placeholder="Add a description for this mapping…"
+            @input="onDescriptionInput"
+          ></textarea>
+        </div>
+        <div
+          class="resize-handle"
+          title="Drag to resize"
+          @mousedown="startDescriptionResize"
+        >
+          <div class="resize-indicator"></div>
+        </div>
+      </CollapsibleSection>
     </div>
   </BasePanel>
 </template>
 
 <style scoped>
 .toolbar-content {
-  padding: 4px;
+  padding: 4px 4px 0 4px;
+}
+
+.toolbar-content--description-folded {
+  padding-bottom: 4px;
 }
 
 /* File subsection — no extra border; CollapsibleSection header border-top provides the separator */
@@ -391,19 +490,18 @@ function onExpandedChange(expanded: boolean): void {
 
 .slot-btn {
   flex: 1;
-  height: 28px;
-  padding: 0;
-  background-color: #000;
+  padding: 4px 6px;
+  background-color: rgba(52, 204, 153, 0.2);
   border: 1px solid #34cc99;
   color: #34cc99;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .slot-btn:hover {
-  background-color: rgba(52, 204, 153, 0.3);
+  background-color: rgba(52, 204, 153, 0.4);
 }
 
 .slot-btn--active {
@@ -544,5 +642,118 @@ function onExpandedChange(expanded: boolean): void {
   font-size: 10px;
   font-weight: bold;
   color: #34cc99;
+}
+
+.filename-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.filename-label {
+  color: rgba(52, 204, 153, 0.7);
+  font-size: 9px;
+}
+
+.filename-input {
+  width: 100%;
+  background-color: rgba(52, 204, 153, 0.05);
+  border: 1px solid rgba(52, 204, 153, 0.4);
+  color: #34cc99;
+  font-size: 10px;
+  padding: 2px 4px;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  cursor: text;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: #F1F700;
+  color: #F1F700;
+}
+
+.filename-input.input-locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.description-wrapper {
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 4px;
+  background-color: #000;
+}
+
+.description-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.description-wrapper::-webkit-scrollbar-track {
+  background: rgba(52, 204, 153, 0.05);
+}
+
+.description-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(52, 204, 153, 0.4);
+  border-radius: 3px;
+}
+
+.description-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #34cc99;
+}
+
+.description-textarea {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+  background-color: transparent;
+  border: 1px solid rgba(52, 204, 153, 0.25);
+  color: #34cc99;
+  font-size: 10px;
+  padding: 4px;
+  resize: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+.description-textarea:focus {
+  outline: none;
+  border-color: rgba(52, 204, 153, 0.6);
+}
+
+.description-textarea:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.resize-handle {
+  width: 100%;
+  height: 10px;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  border-top: 1px solid rgba(52, 204, 153, 0.3);
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.resize-handle:hover {
+  background: rgba(52, 204, 153, 0.2);
+}
+
+.resize-indicator {
+  width: 40px;
+  height: 3px;
+  background: rgba(52, 204, 153, 0.6);
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.resize-handle:hover .resize-indicator {
+  background: #34cc99;
 }
 </style>
