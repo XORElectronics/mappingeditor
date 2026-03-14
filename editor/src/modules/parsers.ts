@@ -8,36 +8,134 @@ export class MappingDocumentParser {
   public static parse(buffer: Uint8Array): docModel.MappingDocument {
     try {
       console.log(`Parsing binary file: ${buffer.length} bytes`);
-      
+
       if (buffer.length < MappingDocumentParser.HEADER_LENGTH) {
         throw new Error(`File too short: ${buffer.length} bytes, expected at least ${MappingDocumentParser.HEADER_LENGTH} bytes for header`);
       }
-      
+
       const document = new docModel.MappingDocument();
-      
+
       // Parse header
       const headerData = buffer.slice(0, MappingDocumentParser.HEADER_LENGTH);
       console.log(`Parsing header: ${headerData.length} bytes`);
       document.header = HeaderParser.parse(headerData);
-      
+
       // Parse rows
       const rowsData = buffer.slice(MappingDocumentParser.HEADER_LENGTH, MappingDocumentParser.VARIABLES_OFFSET);
       document.rows = RowsParser.parse(rowsData);
-      
+
       // Parse variables
       if (buffer.length < MappingDocumentParser.VARIABLES_OFFSET + 32) {
         throw new Error(`File too short for variables: ${buffer.length} bytes, expected at least ${MappingDocumentParser.VARIABLES_OFFSET + 32} bytes`);
       }
-      
+
       const variablesData = buffer.slice(MappingDocumentParser.VARIABLES_OFFSET);
       document.variables = VariablesParser.parse(new Uint16Array(variablesData.buffer, variablesData.byteOffset, variablesData.byteLength / 2));
-      
+
 
       return document;
     } catch (error) {
       console.error('Binary parsing error:', error);
       throw new Error(`Binary file parsing failed: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  /** Parse a JSON mapping file. Handles both old and new JSON formats.
+   *  Does NOT process editorMetadata (colors, comments) — use useFileHandling for full load. */
+  public static parseJson(jsonText: string): docModel.MappingDocument {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const j = JSON.parse(jsonText) as any;
+    const doc = new docModel.MappingDocument();
+
+    // Header — old format: header is object; new format: header is string
+    if (j.header && typeof j.header === 'object') {
+      if (typeof j.header.headerText === 'string') doc.header.headerText = j.header.headerText;
+      if (typeof j.header.majorVersion === 'number') doc.header.majorVersion = j.header.majorVersion;
+      if (typeof j.header.minorVersion === 'number') doc.header.minorVersion = j.header.minorVersion;
+      if (typeof j.header.fileName === 'string') doc.header.fileName = j.header.fileName;
+    } else if (Array.isArray(j.mappings)) {
+      if (typeof j.header === 'string') doc.header.headerText = j.header;
+      if (typeof j.versionMajor === 'number') doc.header.majorVersion = j.versionMajor;
+      if (typeof j.versionMinor === 'number') doc.header.minorVersion = j.versionMinor;
+      if (typeof j.filename === 'string') doc.header.fileName = j.filename;
+    }
+
+    // Rows
+    const rowsData: unknown[] = Array.isArray(j.rows) ? j.rows : (Array.isArray(j.mappings) ? j.mappings : []);
+    for (let i = 0; i < doc.rows.length; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rd = rowsData[i] as any;
+      if (!rd) continue;
+      const row = doc.rows[i];
+
+      const srcTypeKey: number = rd.source?.type ?? rd.sourceType ?? dataModel.EMPTY_KEY;
+      const srcFnKey: number = rd.source?.function ?? rd.sourceFunction ?? dataModel.EMPTY_KEY;
+      const srcExKey: number = rd.source?.extra ?? rd.sourceFunctionExtra ?? dataModel.EMPTY_KEY;
+
+      if (srcTypeKey === dataModel.EMPTY_KEY) {
+        row.source = new docModel.Source(
+          new docModel.SourceType(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION),
+          new docModel.SourceFunction(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION),
+          new docModel.SourceExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION),
+        );
+      } else {
+        const srcTypeData = dataModel.DataModel.sourceTypes.find(s => s.key === srcTypeKey) as dataModel.MappingType | undefined;
+        const srcType = srcTypeData
+          ? new docModel.SourceType(srcTypeData.key, srcTypeData.abbr, srcTypeData.description)
+          : new docModel.SourceType(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+        const srcFnData = srcTypeData?.functions.find((f: dataModel.MappingTuple) => f.key === srcFnKey);
+        const srcFn = srcFnData
+          ? new docModel.SourceFunction(srcFnData.key, srcFnData.abbr, srcFnData.description)
+          : new docModel.SourceFunction(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+        const srcExData = srcTypeData?.extras?.find((e: dataModel.MappingTuple) => e.key === srcExKey);
+        const srcEx = srcExData
+          ? new docModel.SourceExtra(srcExData.key, srcExData.abbr, srcExData.description)
+          : new docModel.SourceExtra(srcExKey, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+        row.source = new docModel.Source(srcType, srcFn, srcEx);
+      }
+
+      const dstTypeKey: number = rd.destination?.type ?? rd.destinationType ?? dataModel.EMPTY_KEY;
+      const dstFnKey: number = rd.destination?.function ?? rd.destinationFunction ?? dataModel.EMPTY_KEY;
+      const dstExKey: number = rd.destination?.extra ?? rd.destinationFunctionExtra ?? dataModel.EMPTY_KEY;
+
+      if (dstTypeKey === dataModel.EMPTY_KEY) {
+        row.destination = new docModel.Destination(
+          new docModel.DestinationType(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION),
+          new docModel.DestinationFunction(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION),
+          new docModel.DestinationExtra(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION),
+        );
+      } else {
+        const dstTypeData = dataModel.DataModel.destinationTypes.find(d => d.key === dstTypeKey) as dataModel.MappingType | undefined;
+        const dstType = dstTypeData
+          ? new docModel.DestinationType(dstTypeData.key, dstTypeData.abbr, dstTypeData.description)
+          : new docModel.DestinationType(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+        const dstFnData = dstTypeData?.functions.find((f: dataModel.MappingTuple) => f.key === dstFnKey);
+        const dstFn = dstFnData
+          ? new docModel.DestinationFunction(dstFnData.key, dstFnData.abbr, dstFnData.description)
+          : new docModel.DestinationFunction(dataModel.EMPTY_KEY, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+        const dstExData = dstTypeData?.extras?.find((e: dataModel.MappingTuple) => e.key === dstExKey);
+        const dstEx = dstExData
+          ? new docModel.DestinationExtra(dstExData.key, dstExData.abbr, dstExData.description)
+          : new docModel.DestinationExtra(dstExKey, dataModel.EMPTY_ABBR, dataModel.EMPTY_DESCRIPTION);
+        row.destination = new docModel.Destination(dstType, dstFn, dstEx);
+      }
+
+      if (typeof rd.unused1 === 'number') row.unused1 = rd.unused1;
+      if (typeof rd.unused2 === 'number') row.unused2 = rd.unused2;
+      if (typeof rd.unused3 === 'number') row.unused3 = rd.unused3;
+      if (typeof rd.unused4 === 'number') row.unused4 = rd.unused4;
+    }
+
+    // Variables
+    if (Array.isArray(j.variables)) {
+      for (let i = 0; i < doc.variables.length && i < j.variables.length; i++) {
+        const v = j.variables[i];
+        if (typeof v === 'number') doc.variables[i].value = v;
+        else if (v && typeof v.value === 'number') doc.variables[i].value = v.value;
+      }
+    }
+
+    return doc;
   }
 }
 

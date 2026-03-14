@@ -50,8 +50,8 @@ export function useFileHandling(options: UseFileHandlingOptions) {
 
   const { addDebug, addError } = useWarningLog();
 
-  function readFile() {
-    const file = fileInput.value?.files?.[0];
+  function readFile(fileParam?: File) {
+    const file = fileParam ?? fileInput.value?.files?.[0];
 
     if (!file) {
       alert('No file uploaded!');

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import _ from "lodash";
-import { ref, onMounted, watch } from 'vue';
+import { ref, shallowRef, computed, onMounted, watch } from 'vue';
 import {
   DataModel, type MappingTuple, type MappingType, EMPTY_KEY, EMPTY_ABBR, EMPTY_DESCRIPTION, MIDI_NRPN_SOURCE_TYPE_KEY, CALC_SOURCE_TYPE_KEY, SKIP_SOURCE_TYPE_KEY,
   EXTERNAL_SOURCE_TYPE_KEY, keyboardSourceExtras, segaGamepadSourceExtras, nerdseqButtonsSourceExtras, globalButtonsDestinationExtras, globalModesDestinationExtras, globalScreensDestinationExtras,
@@ -29,7 +29,8 @@ import SelectionToolbar from './SelectionToolbar.vue';
 import SettingsPanel from './SettingsPanel.vue';
 import LogMonitor from './LogMonitor.vue';
 import GlobalDocumentationPanel from './GlobalDocumentationPanel.vue';
-import OpenFileModal from './OpenFileModal.vue';
+import PresetLibraryModal from './PresetLibraryModal.vue';
+import LocalImportModal from './LocalImportModal.vue';
 import IconButton from './IconButton.vue';
 import ToastNotifications from './ToastNotifications.vue';
 import { useMidi } from '../composables/useMidi';
@@ -46,6 +47,7 @@ import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useAutoAdvance } from '../composables/useAutoAdvance';
 import { useDocumentSerialization } from '../composables/useDocumentSerialization';
 import { useFileHandling } from '../composables/useFileHandling';
+import { loadLocalFile, type ImportPreview, type GhostRow } from '../composables/usePresetImport';
 import {
   SetRowColorCommand, SetRowCommentCommand,
   SetVariableValueCommand, SetSourceCommand, SetDestinationCommand,
@@ -58,7 +60,11 @@ const mappingDocument = ref<MappingDocument>(new MappingDocument());
 // Vue's UnwrapRef<T> strips private class fields; this accessor restores the correct MappingDocument type for commands
 const doc = (): MappingDocument => mappingDocument.value as unknown as MappingDocument;
 const fileInput = ref<HTMLInputElement | null>(null);
-const showOpenFileModal = ref(false);
+const showPresetLibraryModal = ref(false);
+const importPreview = ref<ImportPreview | null>(null);
+const showLocalImportModal = ref(false);
+const localImportDoc = shallowRef<MappingDocument | null>(null);
+const localImportFileName = ref('');
 
 // Skip analysis composable
 const { isRowSkipped } = useSkipAnalysis(mappingDocument);
@@ -526,6 +532,48 @@ function setRowColor(color: string | null): void {
 function getRowBackgroundColor(rowIndex: number): string | undefined {
   return rowColors.value.get(rowIndex);
 }
+
+// O(1) lookup: target rowIndex → GhostRow
+const previewRowMap = computed(() => {
+  const map = new Map<number, GhostRow>();
+  if (!importPreview.value) return map;
+  const { targetIndex, ghostRows } = importPreview.value;
+  ghostRows.forEach((gr, i) => map.set(targetIndex + i, gr));
+  return map;
+});
+
+function isCutBoundaryRow(rowIndex: number): boolean {
+  if (!importPreview.value || importPreview.value.cutCount === 0) return false;
+  const { targetIndex, ghostRows } = importPreview.value;
+  return rowIndex === targetIndex + ghostRows.length - 1;
+}
+
+function getRowPreviewClass(rowIndex: number): string | null {
+  if (!importPreview.value) return null;
+  return previewRowMap.value.has(rowIndex) ? 'row--preview-insert' : null;
+}
+
+async function onLocalFileSelected(file: File): Promise<void> {
+  try {
+    const doc = await loadLocalFile(file);
+    localImportDoc.value = doc;
+    localImportFileName.value = file.name;
+    showPresetLibraryModal.value = false;
+    showLocalImportModal.value = true;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    showToast(`Failed to load "${file.name}": ${msg}`, 'error');
+  }
+}
+
+// Clear preview when modals are closed
+watch(showPresetLibraryModal, (v) => {
+  if (!v) importPreview.value = null;
+});
+
+watch(showLocalImportModal, (v) => {
+  if (!v) importPreview.value = null;
+});
 
 // Keyboard shortcuts composable (registers/unregisters event listeners)
 useKeyboardShortcuts({
@@ -996,6 +1044,9 @@ function downloadMap() {
     </div>
   </header>
 
+  <!-- Panel bar: flex container keeps all panels adjacent without JS position math -->
+  <div id="panel-bar">
+
   <!-- Settings Panel (rightmost) -->
   <SettingsPanel
     v-model:display-row-index-as-hex="displayRowIndexAsHex"
@@ -1006,18 +1057,10 @@ function downloadMap() {
     v-model:show-description="showDescription"
     v-model:midi-learn-auto-advance="midiLearnAutoAdvance"
     v-model:paste-auto-advance="pasteAutoAdvance"
-    :is-locked="isCurrentLocked"
     :header-text="mappingDocument.header.headerText"
     :firmware-major="mappingDocument.header.majorVersion"
     :firmware-minor="mappingDocument.header.minorVersion"
     @expanded-change="settingsPanelExpanded = $event"
-    @open-file="showOpenFileModal = true"
-    @reset="reset"
-    @download-html="downloadHtml"
-    @download-markdown="downloadMarkdown(false)"
-    @download-markdown-ns="downloadMarkdown(true)"
-    @download-json="downloadJson"
-    @download-map="downloadMap"
   />
 
   <!-- Selection Toolbar (docked to left of Settings) -->
@@ -1044,6 +1087,14 @@ function downloadMap() {
     @set-color="setRowColor"
     @cancel="clearRowSelection"
     @switch-slot="handleSlotSwitch"
+    @reset="reset"
+    @local-file-selected="onLocalFileSelected"
+    @open-preset-library="showLocalImportModal = false; showPresetLibraryModal = true"
+    @download-html="downloadHtml"
+    @download-markdown="downloadMarkdown(false)"
+    @download-markdown-ns="downloadMarkdown(true)"
+    @download-json="downloadJson"
+    @download-map="downloadMap"
   />
 
   <!-- MIDI Monitor (docked to left of Selection Toolbar) -->
@@ -1084,23 +1135,36 @@ function downloadMap() {
     @unnotice-warning="handleUnnoticeWarning"
   />
 
-  <!-- Unified Open File Modal -->
-  <OpenFileModal
-    v-if="showOpenFileModal"
+  </div><!-- end panel-bar -->
+
+  <!-- Preset Library Modal -->
+  <PresetLibraryModal
+    v-if="showPresetLibraryModal"
     :mapping-document="mappingDocument"
-    :selected-row-indices="selectedRowIndices"
-    :last-clicked-row-index="lastClickedRowIndex"
     :is-locked="isCurrentLocked"
     :paste-preset-block="pastePresetBlock"
     :schedule-cache-save="scheduleCacheSave"
     :show-toast="showToast"
-    @close="showOpenFileModal = false"
-    @open-local-file="fileInput?.click()"
+    @close="showPresetLibraryModal = false"
+    @preview-change="importPreview = $event"
+  />
+
+  <!-- Local Import Modal -->
+  <LocalImportModal
+    v-if="showLocalImportModal && localImportDoc"
+    :loaded-doc="localImportDoc"
+    :file-name="localImportFileName"
+    :mapping-document="mappingDocument"
+    :is-locked="isCurrentLocked"
+    :paste-preset-block="pastePresetBlock"
+    :schedule-cache-save="scheduleCacheSave"
+    :show-toast="showToast"
+    @close="showLocalImportModal = false"
+    @preview-change="importPreview = $event"
   />
 
   <main>
     <div id="mappingFileSelectContainer" class="pt-3">
-      <input id="fileInput" class="d-none" type="file" accept=".map, .json" ref="fileInput" @change="() => { readFile(); showOpenFileModal = false; }" />
       <input
         type="text"
         class="filename-input"
@@ -1130,7 +1194,7 @@ function downloadMap() {
         <div>Destination Extra</div>
         <div>Clear</div>
       </div>
-      <div id="rowsGridContainer" v-for="row in mappingDocument.rows" :key="row.index" :data-row-index="row.index" :style="{ backgroundColor: getRowBackgroundColor(row.index) }">
+      <div id="rowsGridContainer" v-for="row in mappingDocument.rows" :key="row.index" :data-row-index="row.index" :style="{ backgroundColor: getRowBackgroundColor(row.index) }" :class="getRowPreviewClass(row.index)">
 
         <div
           class="gridItem rowIndex pt-1"
@@ -1490,6 +1554,18 @@ function downloadMap() {
           @clear-destination="clearDestination"
           @notice-warning="(warningId: string) => handleNoticeWarning(warningId)"
         />
+
+        <!-- Ghost overlay: shows incoming row data during import preview -->
+        <div v-if="previewRowMap.has(row.index)" class="ghost-overlay" aria-hidden="true">
+          <span class="ghost-src">← {{ previewRowMap.get(row.index)!.srcIndex }}</span>
+          <span class="ghost-content">
+            {{ previewRowMap.get(row.index)!.sourceType }}/{{ previewRowMap.get(row.index)!.sourceFunc }}
+            → {{ previewRowMap.get(row.index)!.destType }}/{{ previewRowMap.get(row.index)!.destFunc }}
+          </span>
+          <span v-if="isCutBoundaryRow(row.index)" class="ghost-cut-badge">
+            ↕ {{ importPreview!.cutCount }} cut
+          </span>
+        </div>
       </div>
       <div id="variablesContainer" class="pt-3"></div>
     </div>
@@ -1497,6 +1573,27 @@ function downloadMap() {
 </template>
 
 <style scoped>
+/* Panel bar: replaces individual JS-calculated right positions with CSS flex layout.
+   Panels inside are positioned relative to the container, not fixed to the viewport. */
+#panel-bar {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 1000;
+}
+
+#panel-bar :deep(.base-panel) {
+  position: relative !important;
+  top: 0 !important;
+  right: auto !important;
+  transform: none !important;
+  z-index: auto;
+}
+
 h2 {
   color: var(--color-text-yellow);
 }
@@ -1540,6 +1637,67 @@ h2 {
 #rowsGridContainer {
   margin: 0px;
   padding: 1px;
+  position: relative;
+}
+
+/* Ghost overlay for import preview */
+.ghost-overlay {
+  position: absolute;
+  /* Start after the row-index column (~2.5em) to avoid colliding with the row number */
+  left: 2.5em;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  pointer-events: none;
+  font-size: 11px;
+  font-weight: bold;
+  color: #34cc99;
+  background: rgba(5, 20, 15, 0.72);
+  overflow: hidden;
+  white-space: nowrap;
+  z-index: 2;
+  letter-spacing: 0.02em;
+}
+
+.ghost-src {
+  color: rgba(52, 204, 153, 0.55);
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: normal;
+}
+
+.ghost-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  text-shadow: 0 0 6px rgba(52, 204, 153, 0.4);
+}
+
+.ghost-cut-badge {
+  margin-left: auto;
+  padding: 1px 5px;
+  background: rgba(255, 80, 40, 0.15);
+  border: 1px solid rgba(255, 80, 40, 0.7);
+  color: rgba(255, 100, 50, 1);
+  font-size: 9px;
+  font-weight: bold;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+/* Import preview overlays (7.5) */
+.row--preview-insert {
+  outline: 2px dashed rgba(52, 204, 153, 0.5);
+  background-color: rgba(52, 204, 153, 0.08) !important;
+}
+
+.row--preview-replace {
+  outline: 2px dashed rgba(220, 170, 0, 0.6);
+  background-color: rgba(220, 170, 0, 0.08) !important;
 }
 
 #rowsGridContainerHeader {

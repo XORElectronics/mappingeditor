@@ -304,7 +304,7 @@ const displayedUndoHistoryReversed = computed(() => {
     storage-key="warning-log-expanded"
     :right-position="logRight"
     minimized-width="140px"
-    expanded-width="350px"
+    expanded-width="280px"
     :resizable="shouldLockHeight"
     :min-height="150"
     :max-height="800"

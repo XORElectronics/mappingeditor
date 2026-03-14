@@ -9,7 +9,6 @@ const props = defineProps<{
   showVariableMonitor: boolean
   showLogMonitor: boolean
   showDescription: boolean
-  isLocked: boolean
   midiLearnAutoAdvance: boolean
   pasteAutoAdvance: 'disabled' | 'rows-only' | 'all'
   // Info section props
@@ -28,13 +27,6 @@ const emit = defineEmits<{
   'update:showDescription': [value: boolean]
   'update:midiLearnAutoAdvance': [value: boolean]
   'update:pasteAutoAdvance': [value: 'disabled' | 'rows-only' | 'all']
-  'open-file': []
-  'reset': []
-  'download-html': []
-  'download-markdown': []
-  'download-markdown-ns': []
-  'download-json': []
-  'download-map': []
 }>()
 
 function toggleHexDisplay(): void {
@@ -79,6 +71,7 @@ function getPasteAutoAdvanceLabel(): string {
     case 'all': return 'ALL'
   }
 }
+
 </script>
 
 <template>
@@ -87,28 +80,11 @@ function getPasteAutoAdvanceLabel(): string {
     storage-key="settings-panel-expanded"
     right-position="10px"
     minimized-width="100px"
-    expanded-width="220px"
+    expanded-width="200px"
     custom-max-height="none"
     @expanded-change="$emit('expandedChange', $event)"
   >
     <div class="settings-content">
-
-      <CollapsibleSection label="File" storage-key="settings-file-expanded">
-        <div class="setting-item file-actions">
-          <button class="file-btn file-btn--open" @click="$emit('open-file')">Open Mapping File</button>
-          <button class="file-btn file-btn--reset" :disabled="isLocked" @click="$emit('reset')">Reset</button>
-        </div>
-        <div class="setting-item">
-          <span class="setting-label">Save as:</span>
-          <div class="save-grid">
-            <button class="save-btn" @click="$emit('download-html')">HTML</button>
-            <button class="save-btn" @click="$emit('download-markdown')">MD</button>
-            <button class="save-btn" @click="$emit('download-markdown-ns')">NS MD</button>
-            <button class="save-btn" @click="$emit('download-json')">JSON</button>
-            <button class="save-btn" @click="$emit('download-map')">MAP</button>
-          </div>
-        </div>
-      </CollapsibleSection>
 
       <CollapsibleSection label="Row Index Format" storage-key="settings-row-format-expanded">
         <div class="setting-item">
@@ -271,65 +247,6 @@ function getPasteAutoAdvanceLabel(): string {
   color: #34cc99;
 }
 
-/* File section styles */
-.file-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.file-btn {
-  flex: 1;
-  font-size: 10px;
-  padding: 4px 6px;
-  background-color: rgba(52, 204, 153, 0.15);
-  border: 1px solid #34cc99;
-  color: #34cc99;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.15s;
-}
-
-.file-btn:hover:not(:disabled) {
-  background-color: rgba(52, 204, 153, 0.35);
-}
-
-.file-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.file-btn--reset {
-  background-color: rgba(220, 53, 69, 0.15);
-  border-color: #dc3545;
-  color: #dc3545;
-}
-
-.file-btn--reset:hover:not(:disabled) {
-  background-color: rgba(220, 53, 69, 0.35);
-}
-
-.save-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 3px;
-  margin-top: 4px;
-}
-
-.save-btn {
-  font-size: 10px;
-  padding: 3px 2px;
-  background-color: rgba(52, 204, 153, 0.1);
-  border: 1px solid rgba(52, 204, 153, 0.5);
-  color: #34cc99;
-  cursor: pointer;
-  transition: background-color 0.15s;
-  text-align: center;
-}
-
-.save-btn:hover {
-  background-color: rgba(52, 204, 153, 0.3);
-}
-
 /* Info section styles */
 .info-item {
   display: flex;
@@ -350,4 +267,5 @@ function getPasteAutoAdvanceLabel(): string {
   font-weight: 500;
   word-break: break-all;
 }
+
 </style>

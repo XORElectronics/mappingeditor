@@ -264,7 +264,7 @@ function getDisplayContent(varIndex: number): string {
 const expandedWidth = computed(() => {
   // Use consistent 300px width for all formats to ensure proper panel docking
   // and to accommodate future Rows subsection
-  return '300px';
+  return '260px';
 })
 
 function onExpandedChange(expanded: boolean): void {

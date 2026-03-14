@@ -6,6 +6,36 @@ export interface PresetManifestEntry {
   id: string;
   filename: string;
   label: string;
+  category?: string;
+  description?: string;
+  tags?: string[];
+  author?: string;
+}
+
+export interface GhostRow {
+  srcIndex: number;
+  sourceType: string;
+  sourceFunc: string;
+  destType: string;
+  destFunc: string;
+}
+
+export interface ImportPreview {
+  targetIndex: number;
+  blockSize: number;
+  ghostRows: GhostRow[];
+  cutCount: number;
+}
+
+export async function loadLocalFile(file: File): Promise<MappingDocument> {
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.map')) {
+    return MappingDocumentParser.parse(new Uint8Array(await file.arrayBuffer()));
+  }
+  if (name.endsWith('.json')) {
+    return MappingDocumentParser.parseJson(await file.text());
+  }
+  throw new Error(`Unsupported file type: ${file.name}`);
 }
 
 // Structural interfaces to handle both real class instances and Vue's UnwrapRef versions
@@ -13,8 +43,56 @@ interface RowLike {
   source: { type: { key: number } };
 }
 
+interface GhostRowLike {
+  source: { type: { key: number; abbr: string }; function: { abbr: string } };
+  destination: { type: { abbr: string }; function: { abbr: string } };
+}
+
+export function buildGhostRows(
+  sourceRows: GhostRowLike[],
+  startLine: number,
+  endLine: number,
+  targetIndex: number
+): { ghostRows: GhostRow[]; cutCount: number } {
+  const ghostRows: GhostRow[] = [];
+  let cutCount = 0;
+  for (let i = 0; i <= endLine - startLine; i++) {
+    const srcRow = sourceRows[startLine + i];
+    if (!srcRow) { cutCount++; continue; }
+    if (targetIndex + i >= 70) { cutCount++; continue; }
+    ghostRows.push({
+      srcIndex: startLine + i,
+      sourceType: srcRow.source.type.abbr,
+      sourceFunc: srcRow.source.function.abbr,
+      destType: srcRow.destination.type.abbr,
+      destFunc: srcRow.destination.function.abbr,
+    });
+  }
+  return { ghostRows, cutCount };
+}
+
 interface MappingDocumentLike {
   rows: RowLike[];
+}
+
+export function getUsedRowCount(doc: MappingDocumentLike): number {
+  let count = 0;
+  for (const row of doc.rows) {
+    if (row.source.type.key !== EMPTY_KEY) count++;
+  }
+  return count;
+}
+
+// Find the index after the last non-empty row (for append mode).
+// Returns 0 if all rows are empty.
+export function findAppendIndex(rows: RowLike[]): number {
+  let lastNonEmpty = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].source.type.key !== EMPTY_KEY) {
+      lastNonEmpty = i;
+    }
+  }
+  return lastNonEmpty + 1;
 }
 
 export function usePresetImport() {
@@ -34,26 +112,6 @@ export function usePresetImport() {
     }
     const buffer = await response.arrayBuffer();
     return MappingDocumentParser.parse(new Uint8Array(buffer));
-  }
-
-  function getUsedRowCount(doc: MappingDocumentLike): number {
-    let count = 0;
-    for (const row of doc.rows) {
-      if (row.source.type.key !== EMPTY_KEY) count++;
-    }
-    return count;
-  }
-
-  // Find the index after the last non-empty row (for append mode).
-  // Returns 0 if all rows are empty.
-  function findAppendIndex(rows: RowLike[]): number {
-    let lastNonEmpty = -1;
-    for (let i = 0; i < rows.length; i++) {
-      if (rows[i].source.type.key !== EMPTY_KEY) {
-        lastNonEmpty = i;
-      }
-    }
-    return lastNonEmpty + 1;
   }
 
   return {

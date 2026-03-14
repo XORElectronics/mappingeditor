@@ -5,6 +5,15 @@ import CollapsibleSection from './CollapsibleSection.vue';
 import { ROW_COLORS } from '../constants/colors';
 import { usePanelLayout } from '../composables/usePanelLayout';
 
+const importFileRef = ref<HTMLInputElement | null>(null);
+
+function onImportFileChange(event: Event): void {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  emit('local-file-selected', file);
+  if (importFileRef.value) importFileRef.value.value = '';
+}
+
 const props = defineProps<{
   selectedCount: number;
   hasCopiedRow: boolean;
@@ -32,6 +41,14 @@ const emit = defineEmits<{
   (e: 'setColor', color: string | null): void;
   (e: 'cancel'): void;
   (e: 'switchSlot', slot: 'A' | 'B'): void;
+  (e: 'reset'): void;
+  (e: 'local-file-selected', file: File): void;
+  (e: 'open-preset-library'): void;
+  (e: 'download-html'): void;
+  (e: 'download-markdown'): void;
+  (e: 'download-markdown-ns'): void;
+  (e: 'download-json'): void;
+  (e: 'download-map'): void;
 }>();
 
 // Track expanded state - initialize from localStorage to match BasePanel's initial state
@@ -84,7 +101,7 @@ function onExpandedChange(expanded: boolean): void {
     storage-key="selection-toolbar-expanded"
     :right-position="selectionRight"
     minimized-width="120px"
-    expanded-width="260px"
+    expanded-width="200px"
     @expanded-change="onExpandedChange"
   >
 
@@ -114,118 +131,154 @@ function onExpandedChange(expanded: boolean): void {
               @click="$emit('switchSlot', 'B')"
             >2</button>
           </div>
+          <button
+            class="reset-btn"
+            :disabled="isLocked"
+            @click="$emit('reset')"
+            title="Reset mapping to empty"
+          >
+            Reset
+          </button>
         </CollapsibleSection>
       </div>
 
-      <!-- No selection state -->
-      <div v-if="!hasSelection" class="no-selection">
-        <div class="empty-message">No rows selected</div>
-        <div class="hint">Click a row to select it</div>
-        <button
-          v-if="canPaste"
-          class="action-btn paste-available"
-          @click="$emit('paste')"
-          title="Paste rows"
-        >
-          Paste Available
-        </button>
+      <!-- File subsection -->
+      <div class="file-section">
+        <CollapsibleSection label="File" storage-key="selection-file-expanded">
+          <input
+            type="file"
+            ref="importFileRef"
+            accept=".map,.json"
+            class="hidden-file-input"
+            @change="onImportFileChange"
+          />
+          <div class="file-buttons">
+            <button class="file-btn" @click="importFileRef?.click()">Import…</button>
+            <button class="file-btn" @click="emit('open-preset-library')">Open Preset Library…</button>
+          </div>
+          <div class="save-label">Save as:</div>
+          <div class="save-grid">
+            <button class="save-btn" @click="emit('download-html')">HTML</button>
+            <button class="save-btn" @click="emit('download-markdown')">MD</button>
+            <button class="save-btn" @click="emit('download-markdown-ns')">NS MD</button>
+            <button class="save-btn" @click="emit('download-json')">JSON</button>
+            <button class="save-btn" @click="emit('download-map')">MAP</button>
+          </div>
+        </CollapsibleSection>
       </div>
 
-      <!-- Has selection -->
-      <div v-else class="selection-actions">
-        <!-- Action buttons row 1: Cut, Copy, Paste -->
-        <div class="button-row">
+      <!-- Actions subsection -->
+      <CollapsibleSection label="Actions" storage-key="selection-actions-expanded">
+        <!-- No selection state -->
+        <div v-if="!hasSelection" class="no-selection">
+          <div class="empty-message">No rows selected</div>
+          <div class="hint">Click a row to select it</div>
           <button
-            class="action-btn"
-            :disabled="isLocked"
-            @click="$emit('cut')"
-            title="Cut (Ctrl+X)"
-          >
-            Cut
-          </button>
-          <button
-            class="action-btn"
-            @click="$emit('copy')"
-            title="Copy (Ctrl+C)"
-          >
-            Copy
-          </button>
-          <button
-            class="action-btn"
+            v-if="canPaste"
+            class="action-btn paste-available"
             @click="$emit('paste')"
-            :disabled="!canPaste || isLocked"
-            title="Paste (Ctrl+V)"
+            title="Paste rows"
           >
-            Paste
+            Paste Available
           </button>
         </div>
 
-        <!-- Action buttons row 2: Move Up, Move Down -->
-        <div class="button-row">
-          <button
-            class="action-btn"
-            @click="$emit('moveUp')"
-            :disabled="!canMoveUp || isLocked"
-            title="Move Up"
-          >
-            Move Up
-          </button>
-          <button
-            class="action-btn"
-            @click="$emit('moveDown')"
-            :disabled="!canMoveDown || isLocked"
-            title="Move Down"
-          >
-            Move Down
-          </button>
-        </div>
+        <!-- Has selection -->
+        <div v-else class="selection-actions">
+          <!-- Action buttons row 1: Cut, Copy, Paste -->
+          <div class="button-row">
+            <button
+              class="action-btn"
+              :disabled="isLocked"
+              @click="$emit('cut')"
+              title="Cut (Ctrl+X)"
+            >
+              Cut
+            </button>
+            <button
+              class="action-btn"
+              @click="$emit('copy')"
+              title="Copy (Ctrl+C)"
+            >
+              Copy
+            </button>
+            <button
+              class="action-btn"
+              @click="$emit('paste')"
+              :disabled="!canPaste || isLocked"
+              title="Paste (Ctrl+V)"
+            >
+              Paste
+            </button>
+          </div>
 
-        <!-- Action buttons row 3: Color, Clear, Cancel -->
-        <div class="button-row">
-          <button
-            class="action-btn color-btn"
-            :disabled="isLocked"
-            @click="showColorPicker = !showColorPicker"
-            title="Set Color"
-          >
-            Color
-          </button>
-          <button
-            class="action-btn btn-danger"
-            :disabled="isLocked"
-            @click="$emit('clear')"
-            title="Clear (Delete)"
-          >
-            Clear
-          </button>
-          <button
-            class="action-btn btn-cancel"
-            @click="$emit('cancel')"
-            title="Cancel (Escape)"
-          >
-            Deselect
-          </button>
-        </div>
+          <!-- Action buttons row 2: Move Up, Move Down -->
+          <div class="button-row">
+            <button
+              class="action-btn"
+              @click="$emit('moveUp')"
+              :disabled="!canMoveUp || isLocked"
+              title="Move Up"
+            >
+              Move Up
+            </button>
+            <button
+              class="action-btn"
+              @click="$emit('moveDown')"
+              :disabled="!canMoveDown || isLocked"
+              title="Move Down"
+            >
+              Move Down
+            </button>
+          </div>
 
-        <!-- Color picker dropdown -->
-        <div v-if="showColorPicker" class="color-picker">
-          <button
-            v-for="color in ROW_COLORS"
-            :key="color.name"
-            class="color-swatch"
-            :style="{ backgroundColor: color.value }"
-            @click="handleColorSelect(color.name)"
-            :title="color.name"
-          ></button>
-          <button
-            class="color-swatch color-none"
-            @click="handleColorSelect(null)"
-            title="Clear color"
-          >
-            X
-          </button>
+          <!-- Action buttons row 3: Color, Clear, Cancel -->
+          <div class="button-row">
+            <button
+              class="action-btn color-btn"
+              :disabled="isLocked"
+              @click="showColorPicker = !showColorPicker"
+              title="Set Color"
+            >
+              Color
+            </button>
+            <button
+              class="action-btn btn-danger"
+              :disabled="isLocked"
+              @click="$emit('clear')"
+              title="Clear (Delete)"
+            >
+              Clear
+            </button>
+            <button
+              class="action-btn btn-cancel"
+              @click="$emit('cancel')"
+              title="Cancel (Escape)"
+            >
+              Deselect
+            </button>
+          </div>
+
+          <!-- Color picker dropdown -->
+          <div v-if="showColorPicker" class="color-picker">
+            <button
+              v-for="color in ROW_COLORS"
+              :key="color.name"
+              class="color-swatch"
+              :style="{ backgroundColor: color.value }"
+              @click="handleColorSelect(color.name)"
+              :title="color.name"
+            ></button>
+            <button
+              class="color-swatch color-none"
+              @click="handleColorSelect(null)"
+              title="Clear color"
+            >
+              X
+            </button>
+          </div>
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   </BasePanel>
 </template>
@@ -235,14 +288,73 @@ function onExpandedChange(expanded: boolean): void {
   padding: 4px;
 }
 
-/* Slots subsection */
-.slots-section {
+/* File subsection — no extra border; CollapsibleSection header border-top provides the separator */
+.file-section {
   margin-bottom: 4px;
-  border-bottom: 1px solid rgba(52, 204, 153, 0.3);
-  padding-bottom: 4px;
 }
 
-/* Remove CollapsibleSection's top border/margin — the panel frame is enough */
+.hidden-file-input {
+  display: none;
+}
+
+.file-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.file-btn {
+  width: 100%;
+  font-size: 10px;
+  padding: 4px 6px;
+  background-color: rgba(52, 204, 153, 0.15);
+  border: 1px solid #34cc99;
+  color: #34cc99;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-align: center;
+}
+
+.file-btn:hover {
+  background-color: rgba(52, 204, 153, 0.35);
+}
+
+.save-label {
+  color: #34cc99;
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: 6px;
+  margin-bottom: 3px;
+}
+
+.save-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.save-btn {
+  font-size: 10px;
+  padding: 3px 2px;
+  background-color: rgba(52, 204, 153, 0.1);
+  border: 1px solid rgba(52, 204, 153, 0.5);
+  color: #34cc99;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  text-align: center;
+}
+
+.save-btn:hover {
+  background-color: rgba(52, 204, 153, 0.3);
+}
+
+/* Slots subsection — first section, so suppress the CollapsibleSection header's top border */
+.slots-section {
+  margin-bottom: 4px;
+}
+
 .slots-section :deep(.cs-header) {
   border-top: none;
   margin-top: 0;
@@ -253,6 +365,28 @@ function onExpandedChange(expanded: boolean): void {
   display: flex;
   gap: 4px;
   margin-top: 6px;
+}
+
+.reset-btn {
+  width: 100%;
+  margin-top: 4px;
+  padding: 3px 6px;
+  background-color: rgba(220, 53, 69, 0.15);
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.reset-btn:hover:not(:disabled) {
+  background-color: rgba(220, 53, 69, 0.35);
+}
+
+.reset-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .slot-btn {
@@ -299,7 +433,7 @@ function onExpandedChange(expanded: boolean): void {
   flex-direction: column;
   gap: 4px;
   text-align: center;
-  padding: 8px 4px;
+  padding: 4px 0;
 }
 
 .empty-message {
@@ -328,16 +462,17 @@ function onExpandedChange(expanded: boolean): void {
   flex: 1;
   padding: 4px 6px;
   border: 1px solid #34cc99;
-  background-color: #000;
+  background-color: rgba(52, 204, 153, 0.1);
   color: #34cc99;
   cursor: pointer;
   font-size: 10px;
   font-weight: bold;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s;
+  text-align: center;
 }
 
 .action-btn:hover:not(:disabled) {
-  background-color: rgba(52, 204, 153, 0.4);
+  background-color: rgba(52, 204, 153, 0.35);
 }
 
 .action-btn:disabled {
@@ -346,30 +481,35 @@ function onExpandedChange(expanded: boolean): void {
 }
 
 .action-btn.btn-danger {
-  background-color: #cc8534;
-  border-color: #cc8534;
-  color: #000;
+  background-color: rgba(220, 53, 69, 0.15);
+  border-color: #dc3545;
+  color: #dc3545;
 }
 
 .action-btn.btn-danger:hover:not(:disabled) {
-  background-color: #F1F700;
-  color: #000;
-  border-color: #F1F700;
+  background-color: rgba(220, 53, 69, 0.35);
 }
 
 .action-btn.btn-cancel {
-  background-color: #333;
-  border-color: #34cc99;
+  background-color: rgba(52, 204, 153, 0.05);
+  border-color: rgba(52, 204, 153, 0.4);
+  color: rgba(52, 204, 153, 0.6);
+}
+
+.action-btn.btn-cancel:hover:not(:disabled) {
+  background-color: rgba(52, 204, 153, 0.2);
+  color: #34cc99;
 }
 
 .action-btn.paste-available {
-  background-color: #34cc99;
-  color: #000;
-  margin-top: 8px;
+  background-color: rgba(52, 204, 153, 0.2);
+  border-color: #34cc99;
+  color: #34cc99;
+  margin-top: 4px;
 }
 
 .action-btn.paste-available:hover {
-  background-color: #F1F700;
+  background-color: rgba(52, 204, 153, 0.4);
 }
 
 .color-picker {

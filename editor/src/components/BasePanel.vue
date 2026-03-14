@@ -130,7 +130,7 @@ defineExpose({ isExpanded })
   <div
     class="base-panel"
     :class="{ expanded: isExpanded, minimized: !isExpanded }"
-    :style="{ right: rightPosition, width: panelWidth }"
+    :style="{ right: rightPosition, width: panelWidth, '--bp-right': rightPosition, '--bp-width': panelWidth }"
   >
     <div class="panel-header" @click="toggleExpand">
       <span class="title">{{ title }}</span>
@@ -166,6 +166,8 @@ defineExpose({ isExpanded })
   transition: all 0.3s ease;
   font-size: 12px;
   overflow: hidden;
+  /* Prevent panel from overflowing the left edge of the viewport */
+  transform: translateX(max(0px, calc(var(--bp-right) + var(--bp-width) - 100vw + 4px)));
 }
 
 .panel-header {

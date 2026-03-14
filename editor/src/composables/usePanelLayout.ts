@@ -4,14 +4,14 @@ import { useMidi } from './useMidi';
 
 // Panel width constants (extracted from individual panel components)
 const PANEL_WIDTHS = {
-  settings:  { minimized: 100, expanded: 220 },
-  selection: { minimized: 120, expanded: 260 },
-  midi:      { minimized: 150, expanded: 320 },
-  variables: { minimized: 110, expanded: 300 },
-  log:       { minimized: 140, expanded: 350 },
+  settings:  { minimized: 100, expanded: 200 },
+  selection: { minimized: 120, expanded: 200 },
+  midi:      { minimized: 150, expanded: 260 },
+  variables: { minimized: 110, expanded: 260 },
+  log:       { minimized: 140, expanded: 280 },
 } as const;
 
-const GAP = 10;
+const GAP = 8;
 const BASE_OFFSET = 10;
 
 export function usePanelLayout() {
