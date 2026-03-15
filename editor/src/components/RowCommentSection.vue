@@ -163,7 +163,7 @@ function getBoolValue(value: number, isSkip: boolean, skipActive: boolean): stri
 
     <textarea
       :value="modelValue"
-      @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+      @change="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       class="comment-textarea"
       placeholder="Add a comment for this row..."
       rows="2"

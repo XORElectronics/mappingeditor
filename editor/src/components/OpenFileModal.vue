@@ -196,9 +196,9 @@ async function onLocalFileSelected(event: Event): Promise<void> {
   isLoadingLocal.value = true;
 
   try {
-    const doc = await loadLocalFile(file);
-    loadedLocalDoc.value = doc;
-    const used = getUsedRowCount(doc);
+    const result = await loadLocalFile(file);
+    loadedLocalDoc.value = result.doc;
+    const used = getUsedRowCount(result.doc);
     localStartLine.value = 0;
     localEndLine.value = used > 0 ? used - 1 : 0;
     localTargetRow.value = findAppendIndex(props.mappingDocument.rows);

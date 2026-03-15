@@ -46,7 +46,7 @@ import { useKeyboardShortcuts } from '../composables/useKeyboardShortcuts';
 import { useAutoAdvance } from '../composables/useAutoAdvance';
 import { useDocumentSerialization } from '../composables/useDocumentSerialization';
 import { useFileHandling } from '../composables/useFileHandling';
-import { loadLocalFile, type ImportPreview, type GhostRow } from '../composables/usePresetImport';
+import { loadLocalFile, type LoadedFileResult, type ImportPreview, type GhostRow } from '../composables/usePresetImport';
 import {
   SetRowColorCommand, SetRowCommentCommand,
   SetVariableValueCommand, SetSourceCommand, SetDestinationCommand,
@@ -64,6 +64,8 @@ const importPreview = ref<ImportPreview | null>(null);
 const showLocalImportModal = ref(false);
 const localImportDoc = shallowRef<MappingDocument | null>(null);
 const localImportFileName = ref('');
+const localImportRowComments = ref<Record<number, string>>({});
+const localImportRowColors = ref<Record<number, string>>({});
 
 // Skip analysis composable
 const { isRowSkipped } = useSkipAnalysis(mappingDocument);
@@ -552,8 +554,10 @@ function getRowPreviewClass(rowIndex: number): string | null {
 
 async function onLocalFileSelected(file: File): Promise<void> {
   try {
-    const doc = await loadLocalFile(file);
-    localImportDoc.value = doc;
+    const result: LoadedFileResult = await loadLocalFile(file);
+    localImportDoc.value = result.doc;
+    localImportRowComments.value = result.rowComments;
+    localImportRowColors.value = result.rowColors;
     localImportFileName.value = file.name;
     showPresetLibraryModal.value = false;
     showLocalImportModal.value = true;
@@ -561,6 +565,77 @@ async function onLocalFileSelected(file: File): Promise<void> {
     const msg = e instanceof Error ? e.message : String(e);
     showToast(`Failed to load "${file.name}": ${msg}`, 'error');
   }
+}
+
+function applyImportMetadata(
+  srcStart: number, srcEnd: number, targetStart: number,
+  options: { slotName: boolean; rowComments: boolean; globalComment: boolean }
+): void {
+  const loadedDoc = localImportDoc.value;
+  if (!loadedDoc) return;
+
+  // Map row comments from source range to target positions
+  if (options.rowComments) {
+    const importedComments = localImportRowComments.value;
+    for (let i = 0; i <= srcEnd - srcStart; i++) {
+      const srcIdx = srcStart + i;
+      const tgtIdx = targetStart + i;
+      if (tgtIdx >= 70) break;
+      const comment = importedComments[srcIdx];
+      if (comment) {
+        rowComments.value[tgtIdx] = comment;
+      }
+    }
+  }
+
+  // Map row colors from source range to target positions
+  const importedColors = localImportRowColors.value;
+  for (let i = 0; i <= srcEnd - srcStart; i++) {
+    const srcIdx = srcStart + i;
+    const tgtIdx = targetStart + i;
+    if (tgtIdx >= 70) break;
+    const color = importedColors[srcIdx];
+    if (color) {
+      rowColors.value.set(tgtIdx, color);
+    }
+  }
+
+  // Set global comment from imported file
+  if (options.globalComment && loadedDoc.globalComment) {
+    (mappingDocument.value as any).globalComment = loadedDoc.globalComment;
+  }
+
+  // Set fileName from imported file
+  if (options.slotName) {
+    const importedFileName = (loadedDoc as any).header?.fileName;
+    if (importedFileName && importedFileName !== 'DEFAULT') {
+      (mappingDocument.value as any).header.fileName = importedFileName;
+    }
+  }
+
+  // Set variables from imported file
+  const loadedVars = (loadedDoc as any).variables;
+  const currentVars = (mappingDocument.value as any).variables;
+  if (loadedVars && currentVars) {
+    for (let i = 0; i < loadedVars.length && i < currentVars.length; i++) {
+      currentVars[i].value = loadedVars[i].value;
+    }
+  }
+
+  // Import header fields (version, headerText, reserved bytes)
+  const loadedHeader = (loadedDoc as any).header;
+  const currentHeader = (mappingDocument.value as any).header;
+  if (loadedHeader && currentHeader) {
+    currentHeader.headerText = loadedHeader.headerText;
+    currentHeader.majorVersion = loadedHeader.majorVersion;
+    currentHeader.minorVersion = loadedHeader.minorVersion;
+    if (loadedHeader.reserved) {
+      currentHeader.reserved = loadedHeader.reserved;
+    }
+  }
+
+  // Clear undo history after full import
+  clearCurrentHistory();
 }
 
 // Clear preview when modals are closed
@@ -1159,6 +1234,7 @@ function downloadMap() {
     :paste-preset-block="pastePresetBlock"
     :schedule-cache-save="scheduleCacheSave"
     :show-toast="showToast"
+    :apply-metadata="applyImportMetadata"
     @close="showLocalImportModal = false"
     @preview-change="importPreview = $event"
   />

@@ -1,6 +1,13 @@
 import { MappingDocumentParser } from '../modules/parsers';
+import { parseJsonMapping } from '../modules/jsonParser';
 import type { MappingDocument } from '../modules/documentModel';
 import { EMPTY_KEY } from '../modules/dataModel';
+
+export interface LoadedFileResult {
+  doc: MappingDocument;
+  rowComments: Record<number, string>;
+  rowColors: Record<number, string>;
+}
 
 export interface PresetManifestEntry {
   id: string;
@@ -27,13 +34,15 @@ export interface ImportPreview {
   cutCount: number;
 }
 
-export async function loadLocalFile(file: File): Promise<MappingDocument> {
+export async function loadLocalFile(file: File): Promise<LoadedFileResult> {
   const name = file.name.toLowerCase();
   if (name.endsWith('.map')) {
-    return MappingDocumentParser.parse(new Uint8Array(await file.arrayBuffer()));
+    const doc = MappingDocumentParser.parse(new Uint8Array(await file.arrayBuffer()));
+    return { doc, rowComments: {}, rowColors: {} };
   }
   if (name.endsWith('.json')) {
-    return MappingDocumentParser.parseJson(await file.text());
+    const { doc, rowComments, rowColors } = parseJsonMapping(await file.text());
+    return { doc, rowComments, rowColors };
   }
   throw new Error(`Unsupported file type: ${file.name}`);
 }

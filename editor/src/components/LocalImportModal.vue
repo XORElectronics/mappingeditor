@@ -18,12 +18,12 @@ const props = defineProps<{
   pastePresetBlock: (block: Row[], targetStartIndex: number) => void;
   scheduleCacheSave: () => void;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error', duration?: number) => void;
+  applyMetadata?: (srcStart: number, srcEnd: number, targetStart: number, options: { slotName: boolean; rowComments: boolean; globalComment: boolean }) => void;
 }>();
 
 const emit = defineEmits<{
   'close': [];
   'preview-change': [preview: ImportPreview | null];
-  'load-full-file': [file: File];
 }>();
 
 const usedRowCount = computed(() => getUsedRowCount(props.loadedDoc));
@@ -32,6 +32,11 @@ const rowCount = computed(() => props.loadedDoc.rows.length);
 const startLine = ref(0);
 const endLine = ref(0);
 const targetRow = ref(0);
+
+// Metadata import options
+const importSlotName = ref(true);
+const importRowComments = ref(true);
+const importGlobalComment = ref(false);
 
 onMounted(() => {
   const used = usedRowCount.value;
@@ -104,25 +109,22 @@ function handleImport(): void {
 
   const truncatedBlock = block.slice(0, rowsFit);
   props.pastePresetBlock(truncatedBlock, targetStart);
-  props.scheduleCacheSave();
 
+  // Import metadata (rowComments, rowColors, globalComment, fileName, variables)
+  if (props.applyMetadata) {
+    const effectiveEnd = startLine.value + rowsFit - 1;
+    props.applyMetadata(startLine.value, effectiveEnd, targetStart, {
+      slotName: importSlotName.value,
+      rowComments: importRowComments.value,
+      globalComment: importGlobalComment.value,
+    });
+  }
+
+  props.scheduleCacheSave();
   props.showToast(
-    `File imported: ${truncatedBlock.length} rows from rows ${startLine.value}–${endLine.value}.`,
+    `File imported: ${truncatedBlock.length} rows from rows ${startLine.value}–${startLine.value + rowsFit - 1}.`,
     'success'
   );
-  emit('close');
-}
-
-function handleLoadAll(): void {
-  if (props.isLocked) return;
-  // Signal parent to do a full file load via the hidden file-based readFile
-  // We emit a synthetic "load full file" using the already-loaded doc
-  // The parent wires this to readFile with the original file reference.
-  // Since we don't hold a File reference here, we paste all rows directly.
-  const allRows = props.loadedDoc.rows as Row[];
-  props.pastePresetBlock(allRows, 0);
-  props.scheduleCacheSave();
-  props.showToast(`Loaded all ${allRows.length} rows from "${props.fileName}".`, 'success');
   emit('close');
 }
 
@@ -217,9 +219,16 @@ watch(activePreview, (p) => emit('preview-change', p), { immediate: true });
         Rows {{ targetRow }}–{{ Math.min(targetRow + selectedRangeCount - 1, 69) }} will be overwritten
       </div>
 
+      <!-- Metadata import options -->
+      <div class="lim-options">
+        <label class="lim-option"><input type="checkbox" v-model="importSlotName" /> Slot name</label>
+        <label class="lim-option"><input type="checkbox" v-model="importRowComments" /> Row comments</label>
+        <label class="lim-option"><input type="checkbox" v-model="importGlobalComment" /> Global comment</label>
+      </div>
+
       <div class="lim-action-row">
         <button class="lim-import-btn" :disabled="!canImport" @click="handleImport">Import Block</button>
-        <button class="lim-load-btn" :disabled="isLocked" @click="handleLoadAll">Load All</button>
+        <button class="lim-load-btn" @click="$emit('close')">Cancel</button>
       </div>
     </div>
   </div>
@@ -402,6 +411,30 @@ watch(activePreview, (p) => emit('preview-change', p), { immediate: true });
   color: rgba(241, 247, 0, 0.7);
   font-size: 9px;
   font-style: italic;
+}
+
+.lim-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lim-option {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(52, 204, 153, 0.8);
+  font-size: 9px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lim-option input[type="checkbox"] {
+  accent-color: #34cc99;
+  width: 10px;
+  height: 10px;
+  margin: 0;
+  cursor: pointer;
 }
 
 .lim-action-row {

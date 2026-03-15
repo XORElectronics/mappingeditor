@@ -1720,7 +1720,9 @@ export const DataModel = {
       description: "Control",
       functions: [
         { key: EMPTY_KEY, abbr: EMPTY_ABBR, description: EMPTY_DESCRIPTION },
-        { key: 0, abbr: `XMAP`, description: "External X Mapping Rows" },
+        { key: 0, abbr: `XMAP`, description: "Execute X Mapping Rows" },
+        { key: 1, abbr: `XXMP`, description: "Exclusive Execute X Mapping Rows" },
+        { key: 2, abbr: `XLOD`, description: "Execute X Mapping Rows Once On Project Load" },
       ],
       extras: genControlSourceExtras(),
     },

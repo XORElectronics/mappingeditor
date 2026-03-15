@@ -248,7 +248,13 @@ class SourceTypeParser {
   public static parse(key: number): [docModel.SourceType, dataModel.MappingType] {
     const sourceMappingType = dataModel.DataModel.sourceTypes.find((c) => c.key === key) as dataModel.MappingType;
     if (!sourceMappingType) {
-      throw new Error(`Unknown source type ${key}`);
+      console.warn(`Unknown source type ${key}, using fallback`);
+      const fallback: dataModel.MappingType = {
+        key, abbr: `S?${key}`, description: `Unknown Source ${key}`,
+        functions: [{ key: dataModel.EMPTY_KEY, abbr: dataModel.EMPTY_ABBR, description: dataModel.EMPTY_DESCRIPTION }],
+        extras: [{ key: dataModel.EMPTY_KEY, abbr: dataModel.EMPTY_ABBR, description: dataModel.EMPTY_DESCRIPTION }],
+      };
+      return [new docModel.SourceType(key, fallback.abbr, fallback.description), fallback];
     }
     const sourceType = new docModel.SourceType(sourceMappingType.key, sourceMappingType.abbr, sourceMappingType.description)
     return [sourceType, sourceMappingType];
@@ -259,7 +265,8 @@ class SourceFunctionParser {
   public static parse(key: number, sourceTypeLookup: dataModel.MappingType): docModel.SourceFunction {
     const sourceMappingFunction = sourceTypeLookup?.functions.find((c) => c.key === key) as dataModel.MappingTuple;
     if (!sourceMappingFunction) {
-      throw new Error(`Unknown source function ${key} for source type ${sourceTypeLookup.key}`);
+      console.warn(`Unknown source function ${key} for source type ${sourceTypeLookup.key}, using fallback`);
+      return new docModel.SourceFunction(key, `F?${key}`, `Unknown Function ${key}`);
     }
     const sourceFunction = new docModel.SourceFunction(sourceMappingFunction.key, sourceMappingFunction.abbr, sourceMappingFunction.description);
     return sourceFunction;
@@ -313,7 +320,9 @@ export class SourceExtraParser {
               {
                 const sourceEx = dataModel.keyboardSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
                 if (!sourceEx) {
-                  throw new Error(`Unknown Keyboard Source Function Extra ${key}`);
+                  console.warn(`Unknown Keyboard Source Function Extra ${key}, using fallback`);
+                  sourceExtra = new docModel.SourceExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                 break;
@@ -322,7 +331,9 @@ export class SourceExtraParser {
               {
                 const sourceEx = dataModel.segaGamepadSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
                 if (!sourceEx) {
-                  throw new Error(`Unknown Sega GamePad Source Function Extra ${key}`);
+                  console.warn(`Unknown Sega GamePad Source Function Extra ${key}, using fallback`);
+                  sourceExtra = new docModel.SourceExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                 break;
@@ -331,14 +342,18 @@ export class SourceExtraParser {
               {
                 const sourceEx = dataModel.nerdseqButtonsSourceExtras.find((c) => c.key === key) as dataModel.MappingTuple
                 if (!sourceEx) {
-                  throw new Error(`Unknown NerdSEQ Buttons Source Function Extra ${key}`);
+                  console.warn(`Unknown NerdSEQ Buttons Source Function Extra ${key}, using fallback`);
+                  sourceExtra = new docModel.SourceExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
                 break;
               }
             default:
               {
-                throw new Error(`Unknown External Source Function ${sourceFunctionKey}`);
+                console.warn(`Unknown External Source Function ${sourceFunctionKey}, using fallback`);
+                sourceExtra = new docModel.SourceExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                break;
               }
           }
           break;
@@ -347,7 +362,9 @@ export class SourceExtraParser {
         {
           const sourceEx = sourceMappingType?.extras.find((e) => e.key === key) as dataModel.MappingTuple;
           if (!sourceEx) {
-            throw new Error(`Unknown Source Function Extra ${key}`);
+            console.warn(`Unknown Source Function Extra ${key}, using fallback`);
+            sourceExtra = new docModel.SourceExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+            break;
           }
           sourceExtra = new docModel.SourceExtra(key, sourceEx.abbr, sourceEx.description);
           break;
@@ -375,8 +392,14 @@ class DestinationTypeParser {
   public static parse(key: number): [docModel.DestinationType, dataModel.MappingType] {
     const destinationMappingType = dataModel.DataModel.destinationTypes?.find((c) => c.key === key) as dataModel.MappingType;
     if (!destinationMappingType) {
-      throw new Error(`Unknown source type ${key}`);
-    };
+      console.warn(`Unknown destination type ${key}, using fallback`);
+      const fallback: dataModel.MappingType = {
+        key, abbr: `D?${key}`, description: `Unknown Destination ${key}`,
+        functions: [{ key: dataModel.EMPTY_KEY, abbr: dataModel.EMPTY_ABBR, description: dataModel.EMPTY_DESCRIPTION }],
+        extras: [{ key: dataModel.EMPTY_KEY, abbr: dataModel.EMPTY_ABBR, description: dataModel.EMPTY_DESCRIPTION }],
+      };
+      return [new docModel.DestinationType(key, fallback.abbr, fallback.description), fallback];
+    }
     const destinationType = new docModel.DestinationType(destinationMappingType.key, destinationMappingType.abbr, destinationMappingType.description)
     return [destinationType, destinationMappingType];
   }
@@ -386,10 +409,11 @@ class DestinationFunctionParser {
   public static parse(key: number, destinationMappingType: dataModel.MappingType): docModel.DestinationFunction {
     const destinationFunctionLookup = destinationMappingType?.functions.find((c) => c.key === key) as dataModel.MappingTuple;
     if (!destinationFunctionLookup) {
-      throw new Error(`Unknown source type ${key}`);
+      console.warn(`Unknown destination function ${key} for destination type ${destinationMappingType.key}, using fallback`);
+      return new docModel.DestinationFunction(key, `F?${key}`, `Unknown Function ${key}`);
     }
-    const sourceFunction = new docModel.DestinationFunction(destinationFunctionLookup.key, destinationFunctionLookup.abbr, destinationFunctionLookup.description);
-    return sourceFunction;
+    const destinationFunction = new docModel.DestinationFunction(destinationFunctionLookup.key, destinationFunctionLookup.abbr, destinationFunctionLookup.description);
+    return destinationFunction;
   }
 }
 
@@ -414,7 +438,9 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.globalButtonsDestinationExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown Global Buttons Destination Function Extra ${key}`);
+                  console.warn(`Unknown Global Buttons Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
@@ -423,7 +449,9 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.globalScreensDestinationExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown Global Screens Destination Function Extra ${key}`);
+                  console.warn(`Unknown Global Screens Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
@@ -432,14 +460,18 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.globalModesDestinationExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown Global Modes Destination Function Extra ${key}`);
+                  console.warn(`Unknown Global Modes Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
               }
             default:
               {
-                throw new Error(`Unknown External Destination Function ${destinationFunctionKey}`);
+                console.warn(`Unknown External Destination Function ${destinationFunctionKey}, using fallback`);
+                destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                break;
               }
           }
           break;
@@ -457,7 +489,9 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.visuShaderSelectExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown VISU Shader Select Destination Function Extra ${key}`);
+                  console.warn(`Unknown VISU Shader Select Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
@@ -466,7 +500,9 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.visuShaderFunctionsExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown VISU Shader Functions Destination Function Extra ${key}`);
+                  console.warn(`Unknown VISU Shader Functions Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
@@ -475,7 +511,9 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.visuModulatorsExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown VISU Modulators Destination Function Extra ${key}`);
+                  console.warn(`Unknown VISU Modulators Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
@@ -484,7 +522,9 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.visuEnvelopesExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown VISU Envelopes Destination Function Extra ${key}`);
+                  console.warn(`Unknown VISU Envelopes Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
@@ -493,14 +533,18 @@ class DestinationExtraParser {
               {
                 const destExtra = dataModel.visuLfosExtras.find((e) => e.key === key) as dataModel.MappingTuple;
                 if (!destExtra) {
-                  throw new Error(`Unknown VISU LFOs Destination Function Extra ${key}`);
+                  console.warn(`Unknown VISU LFOs Destination Function Extra ${key}, using fallback`);
+                  destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                  break;
                 }
                 destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
                 break;
               }
             default:
               {
-                throw new Error(`Unknown VISU Destination Function ${destinationFunctionKey}`);
+                console.warn(`Unknown VISU Destination Function ${destinationFunctionKey}, using fallback`);
+                destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+                break;
               }
           }
           break;
@@ -515,7 +559,9 @@ class DestinationExtraParser {
         {
           const destExtra = destinationMappingType?.extras.find((e) => e.key === key) as dataModel.MappingTuple;
           if (!destExtra) {
-            throw new Error(`Unknown Destination Function Extra ${key}`);
+            console.warn(`Unknown Destination Function Extra ${key}, using fallback`);
+            destinationExtra = new docModel.DestinationExtra(key, `E?${key}`, `Unknown Extra ${key}`);
+            break;
           }
           destinationExtra = new docModel.DestinationExtra(key, destExtra.abbr, destExtra.description);
           break;
